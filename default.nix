@@ -46,6 +46,13 @@ let
       };
       treesitter = "nix";
     };
+    latex = {
+      lsp = {
+        package = pkgs.texlab;
+        serverName = "texlab";
+      };
+      treesitter = "latex";
+    };
   };
 
   # Extract language servers and treesitter parsers
