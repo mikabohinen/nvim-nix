@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    
+
     # Neovim nightly for latest features
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
@@ -21,21 +21,21 @@
             inputs.neovim-nightly-overlay.overlays.default
           ];
         };
-        
+
         # Import your neovim configuration
-        myNeovim = pkgs.callPackage ./default.nix { 
+        myNeovim = pkgs.callPackage ./default.nix {
           inherit pkgs;
         };
-        
+
         # Simple NixOS module for easy integration
-        nixosModule = { config, lib, pkgs, ... }: 
+        nixosModule = { config, lib, pkgs, ... }:
           with lib;
           let cfg = config.programs.mynvim;
           in {
             options.programs.mynvim = {
               enable = mkEnableOption "Enable my custom neovim distribution";
             };
-            
+
             config = mkIf cfg.enable {
               environment.systemPackages = [ myNeovim ];
               environment.variables.EDITOR = "nvim";
@@ -47,13 +47,13 @@
           default = myNeovim;
           neovim = myNeovim;
         };
-        
+
         # For development/testing
         apps.default = {
           type = "app";
           program = "${myNeovim}/bin/nvim";
         };
-        
+
         # Make the NixOS module available
         nixosModules.default = nixosModule;
       }

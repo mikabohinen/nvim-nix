@@ -18,6 +18,10 @@ let
         serverName = "bashls";
       };
       treesitter = "bash";
+      formatter = {
+        name = "shfmt";
+        package = pkgs.shfmt;
+      };
     };
     haskell = {
       lsp = {
@@ -25,6 +29,10 @@ let
         serverName = "hls";
       };
       treesitter = "haskell";
+      formatter = {
+        name = "fourmolu";
+        package = pkgs.haskellPackages.fourmolu;
+      };
     };
     java = {
       lsp = {
@@ -32,12 +40,20 @@ let
         serverName = "jdtls";
       };
       treesitter = "java";
+      formatter = {
+        name = "google-java-format";
+        package = pkgs.google-java-format;
+      };
     };
     lisp = {
       treesitter = "commonlisp";
     };
     markdown = {
       treesitter = "markdown";
+      formatter = {
+        name = "prettier";
+        package = pkgs.nodePackages.prettier;
+      };
     };
     nix = {
       lsp = {
@@ -45,6 +61,10 @@ let
         serverName = "nixd";
       };
       treesitter = "nix";
+      formatter = {
+        name = "nixpkgs_fmt";
+        package = pkgs.nixpkgs-fmt;
+      };
     };
     latex = {
       lsp = {
@@ -52,6 +72,16 @@ let
         serverName = "texlab";
       };
       treesitter = "latex";
+      formatter = {
+        name = "latexindent";
+        package = pkgs.texlive.combined.scheme-medium;
+      };
+    };
+    lua = {
+      formatter = {
+        name = "stylua";
+        package = pkgs.stylua;
+      };
     };
   };
 
@@ -67,6 +97,14 @@ let
     (x: x != null) 
     (builtins.map 
       (lang: if builtins.hasAttr "treesitter" lang then lang.treesitter else null) 
+      (builtins.attrValues supportedLanguages)
+    );
+
+  # Extract formatters
+  formatters = builtins.filter
+    (x: x != null)
+    (builtins.map
+      (lang: if builtins.hasAttr "formatter" lang then lang.formatter.package else null)
       (builtins.attrValues supportedLanguages)
     );
     
@@ -101,6 +139,9 @@ let
     # Agda
     cornelis
     
+    # Formatting
+    conform-nvim
+    
     # Requested extra plugins
     vim-sleuth
     unicode-vim
@@ -126,12 +167,50 @@ let
     -- Set up language servers (dynamically generated)
     ${lspSetupCode}
     
-    -- Format on save
-    vim.api.nvim_create_autocmd("BufWritePre", {
-      callback = function()
-        vim.lsp.buf.format()
-      end,
+    -- Formatting setup with conform.nvim
+    local conform = require("conform")
+    
+    -- Initialize formatter configuration
+    local formatters_by_ft = {
+      ["*"] = { "trim_whitespace" }
+    }
+    
+    -- Add our language-specific formatters
+    ${builtins.concatStringsSep "\n    " (
+      builtins.map 
+        (name: let lang = supportedLanguages.${name}; in
+          if builtins.hasAttr "formatter" lang then
+            ''formatters_by_ft["${name}"] = { "${lang.formatter.name}" }''
+          else ""
+        )
+        (builtins.attrNames supportedLanguages)
+    )}
+    
+    -- Configure the plugin
+    conform.setup({
+      formatters_by_ft = formatters_by_ft,
+      format_on_save = {
+        timeout_ms = 500,
+        lsp_fallback = true,
+      },
+      formatters = {
+        shfmt = {
+          args = { "-i", "2", "-ci" },
+        },
+        stylua = {
+          args = {
+            "--indent-type", "Spaces",
+            "--indent-width", "2",
+            "--quote-style", "AutoPreferDouble",
+          },
+        }
+      }
     })
+    
+    -- Manual formatting keybinding
+    vim.keymap.set("n", "<leader>cf", function()
+      conform.format({ async = true, lsp_fallback = true })
+    end, { desc = "Format buffer" })
     
     -- Auto-pairs setup
     require('nvim-autopairs').setup{}
@@ -205,10 +284,8 @@ pkgs.symlinkJoin {
   postBuild = ''
     wrapProgram $out/bin/nvim \
       --prefix PATH : ${pkgs.lib.makeBinPath (
-        languageServers ++ [
+        languageServers ++ formatters ++ [
           pkgs.ripgrep
           pkgs.fd
         ]
       )}
-  '';
-}
