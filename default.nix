@@ -86,17 +86,17 @@ let
   };
 
   # Extract language servers and treesitter parsers
-  languageServers = builtins.filter 
-    (x: x != null) 
-    (builtins.map 
-      (lang: if builtins.hasAttr "lsp" lang then lang.lsp.package else null) 
+  languageServers = builtins.filter
+    (x: x != null)
+    (builtins.map
+      (lang: if builtins.hasAttr "lsp" lang then lang.lsp.package else null)
       (builtins.attrValues supportedLanguages)
     );
-  
-  treesitterParsers = builtins.filter 
-    (x: x != null) 
-    (builtins.map 
-      (lang: if builtins.hasAttr "treesitter" lang then lang.treesitter else null) 
+
+  treesitterParsers = builtins.filter
+    (x: x != null)
+    (builtins.map
+      (lang: if builtins.hasAttr "treesitter" lang then lang.treesitter else null)
       (builtins.attrValues supportedLanguages)
     );
 
@@ -107,41 +107,42 @@ let
       (lang: if builtins.hasAttr "formatter" lang then lang.formatter.package else null)
       (builtins.attrValues supportedLanguages)
     );
-    
+
   # Generate LSP setup code automatically from the configuration
   lspSetupCode = builtins.concatStringsSep "\n" (
-    builtins.map 
-      (name: let lang = supportedLanguages.${name}; in
+    builtins.map
+      (name:
+        let lang = supportedLanguages.${name}; in
         if builtins.hasAttr "lsp" lang then
           "lspconfig.${lang.lsp.serverName}.setup{}"
         else ""
       )
       (builtins.attrNames supportedLanguages)
   );
-  
+
   # Plugins list
   plugins = with pkgs.vimPlugins; [
     # LSP
     nvim-lspconfig
-    
+
     # Autopairs
     nvim-autopairs
-    
+
     # Syntax/treesitter
-    (nvim-treesitter.withPlugins (p: 
+    (nvim-treesitter.withPlugins (p:
       builtins.map (name: p.${name}) treesitterParsers
     ))
-    
+
     # File navigation
     plenary-nvim
     telescope-nvim
-    
+
     # Agda
     cornelis
-    
+
     # Formatting
     conform-nvim
-    
+
     # Requested extra plugins
     vim-sleuth
     unicode-vim
@@ -156,34 +157,34 @@ let
     vim.opt.tabstop = 2
     vim.opt.expandtab = true
     vim.opt.termguicolors = true
-    
+
     -- Global settings
     vim.g.mapleader = " "
     vim.g.maplocalleader = ","
-    
+
     -- LSP setup
     local lspconfig = require('lspconfig')
-    
+
     -- Set up language servers (dynamically generated)
     ${lspSetupCode}
-    
+
     -- LSP diagnostic keybindings
     vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = "Show diagnostic at cursor" })
     vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic" })
     vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnostic" })
     vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = "Show diagnostics in location list" })
-    
+
     -- Formatting setup with conform.nvim
     local conform = require("conform")
-    
+
     -- Initialize formatter configuration
     local formatters_by_ft = {
       ["*"] = { "trim_whitespace" }
     }
-    
+
     -- Add our language-specific formatters
     ${builtins.concatStringsSep "\n    " (
-      builtins.map 
+      builtins.map
         (name: let lang = supportedLanguages.${name}; in
           if builtins.hasAttr "formatter" lang then
             ''formatters_by_ft["${name}"] = { "${lang.formatter.name}" }''
@@ -191,7 +192,7 @@ let
         )
         (builtins.attrNames supportedLanguages)
     )}
-    
+
     -- Configure the plugin
     conform.setup({
       formatters_by_ft = formatters_by_ft,
@@ -212,21 +213,21 @@ let
         }
       }
     })
-    
+
     -- Manual formatting keybinding
     vim.keymap.set("n", "<leader>cf", function()
       conform.format({ async = true, lsp_fallback = true })
     end, { desc = "Format buffer" })
-    
+
     -- Auto-pairs setup
     require('nvim-autopairs').setup{}
-    
+
     -- Telescope setup
     require('telescope').setup{}
     vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files)
     vim.keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep)
     vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers)
-    
+
     -- User custom configuration for Agda
     vim.cmd 'colorscheme quiet'
     vim.g.cornelis_agda_prefix = "<C-g>"
@@ -280,12 +281,37 @@ let
     };
   };
 
+  # Create a desktop entry file
+  desktopItem = pkgs.makeDesktopItem {
+    name = "nvim";
+    desktopName = "Neovim";
+    genericName = "Text Editor";
+    comment = "Edit text files";
+    exec = "nvim %F";
+    icon = "nvim";
+    terminal = true;
+    categories = [ "Utility" "TextEditor" "Development" ];
+    mimeTypes = [
+      "text/plain"
+      "text/x-markdown"
+      "text/markdown"
+      "text/x-tex"
+      "text/x-chdr"
+      "text/x-csrc"
+      "text/x-c++hdr"
+      "text/x-c++src"
+      "text/x-java"
+      "text/x-python"
+      "application/x-shellscript"
+    ];
+  };
+
 in
 pkgs.symlinkJoin {
   name = "my-neovim";
-  paths = [ neovimWrapped ];
+  paths = [ neovimWrapped desktopItem ]; # Include the desktop item here
   buildInputs = [ pkgs.makeWrapper ];
-  
+
   # Add required runtime dependencies
   postBuild = ''
     wrapProgram $out/bin/nvim \
@@ -295,6 +321,5 @@ pkgs.symlinkJoin {
           pkgs.fd
         ]
       )}
-  ''
-  ;
+  '';
 }
