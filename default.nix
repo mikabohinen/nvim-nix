@@ -146,6 +146,9 @@ let
     # Requested extra plugins
     vim-sleuth
     unicode-vim
+
+    # References
+    papis-nvim
   ];
 
   # Neovim configuration
@@ -267,6 +270,119 @@ let
         pattern = "*.agda",
         command = "CornelisCloseInfoWindows"
     })
+
+    -- Using Neovim's native completion (no nvim-cmp)
+
+    -- papis.nvim setup
+    require('papis').setup({
+      -- Enable default keymaps for easier use
+      enable_keymaps = true,
+
+      -- Customize the filetypes that will activate papis.nvim
+      init_filetypes = { "markdown", "tex", "norg", "yaml", "typst" },
+
+      -- Enable icons for better visual experience
+      enable_icons = true,
+
+      -- Store database in a persistent location
+      db_path = vim.fn.expand("~/.local/share/papis_db/papis-nvim.sqlite3"),
+
+      -- Disable the completion module since we're not using nvim-cmp
+      enable_modules = {
+        ["search"] = true,
+        ["completion"] = false,  -- Disable completion module that requires nvim-cmp
+        ["at-cursor"] = true,
+        ["formatter"] = true,
+        ["colors"] = true,
+        ["base"] = true,
+        ["debug"] = true,  -- Enable debug module to help diagnose issues
+      },
+
+      -- Configuration for the formatter module (customize for markdown notes)
+      ["formatter"] = {
+        format_notes = function(entry)
+          -- Format for the note title
+          local title_format = {
+            { "author", "%s ", "" },
+            { "year", "(%s) ", "" },
+            { "title", "%s", "" },
+          }
+          -- Format the strings with information in the entry
+          local title = require("papis.utils"):format_display_strings(entry, title_format, true)
+          -- Grab only the strings (and disregard highlight groups)
+          for k, v in ipairs(title) do
+            title[k] = v[1]
+          end
+          -- Define all the lines to be inserted
+          local lines = {
+            "---",
+            'title: "Notes -- ' .. table.concat(title) .. '"',
+            "date: " .. os.date("%Y-%m-%d"),
+            "tags: [notes, reference]",
+            "---",
+            "",
+            "# " .. table.concat(title),
+            "",
+            "## Summary",
+            "",
+            "## Key Points",
+            "",
+            "## Notes",
+            "",
+            "## References",
+            "",
+          }
+          return lines
+        end,
+
+        -- Format for inserting references
+        format_references = function(entry)
+          local reference_format = {
+            { "author",  "%s ",   "" },
+            { "year",    "(%s). ", "" },
+            { "title",   "%s. ",  "" },
+            { "journal", "%s. ",    "" },
+            { "volume",  "%s",    "" },
+            { "number",  "(%s)",  "" },
+          }
+          local reference_data = require("papis.utils"):format_display_strings(entry, reference_format)
+          for k, v in ipairs(reference_data) do
+            reference_data[k] = v[1]
+          end
+          local lines = { table.concat(reference_data) }
+          return lines
+        end,
+      },
+
+      -- Custom keybindings (in addition to default ones)
+      ["keymaps"] = {
+        -- Search your bibliography
+        vim.keymap.set('n', '<leader>ps', '<cmd>Papis search<CR>', { desc = "Papis search" }),
+        -- Show citation info at cursor
+        vim.keymap.set('n', '<leader>pi', '<cmd>Papis at-cursor show-popup<CR>', { desc = "Papis show info" }),
+        -- Open file associated with citation at cursor
+        vim.keymap.set('n', '<leader>pf', '<cmd>Papis at-cursor open-file<CR>', { desc = "Papis open file" }),
+        -- Open note associated with citation at cursor
+        vim.keymap.set('n', '<leader>pn', '<cmd>Papis at-cursor open-note<CR>', { desc = "Papis open note" }),
+        -- Edit citation info
+        vim.keymap.set('n', '<leader>pe', '<cmd>Papis at-cursor edit<CR>', { desc = "Papis edit entry" }),
+      }
+    })
+
+    -- Load papis database on startup
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "PapisStarted",
+      callback = function()
+        -- Check if database exists, if not prompt user to load it
+        local Path = require("pathlib")
+        local db_path = Path:new(vim.fn.expand("~/.local/share/papis_db/papis-nvim.sqlite3"))
+
+        if not db_path:exists() then
+          print("papis.nvim database not found. Please run :Papis reload data to initialize it.")
+          print("If you're seeing errors about missing library directories, make sure they exist at ~/Documents/papers and ~/Documents/books")
+        end
+      end
+    })
   '';
 
   # The final Neovim package
@@ -319,6 +435,9 @@ pkgs.symlinkJoin {
         languageServers ++ formatters ++ [
           pkgs.ripgrep
           pkgs.fd
+          pkgs.yq-go     # Required for papis.nvim
+          pkgs.sqlite    # Required for papis.nvim
+          pkgs.papis     # The actual papis program
         ]
       )}
   '';
