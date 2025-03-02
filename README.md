@@ -119,7 +119,8 @@ Add to your `flake.nix`:
 ### File Navigation
 
 - `<leader>ff` - Find files
-- `<leader>fg` - Live grep
+- `<leader><leader>` - Find files
+- `<leader>fw` - Live grep
 - `<leader>fb` - Browse buffers
 
 ### Papis Bibliography Management

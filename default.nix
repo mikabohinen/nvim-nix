@@ -228,7 +228,8 @@ let
     -- Telescope setup
     require('telescope').setup{}
     vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files)
-    vim.keymap.set('n', '<leader>fg', require('telescope.builtin').live_grep)
+    vim.keymap.set('n', '<leader><leader>', require('telescope.builtin').find_files)
+    vim.keymap.set('n', '<leader>fw', require('telescope.builtin').live_grep)
     vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers)
 
     -- User custom configuration for Agda
