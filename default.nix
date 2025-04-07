@@ -83,6 +83,17 @@ let
         package = pkgs.stylua;
       };
     };
+    python = {
+      lsp = {
+        package = pkgs.pyright;
+        serverName = "pyright";
+      };
+      treesitter = "python";
+      formatter = {
+        name = "black";
+        package = pkgs.black;
+      };
+    };
   };
 
   # Extract language servers and treesitter parsers
@@ -212,6 +223,11 @@ let
             "--indent-type", "Spaces",
             "--indent-width", "2",
             "--quote-style", "AutoPreferDouble",
+          },
+        },
+        black = {
+          args = {
+            "--line-length", "100",
           },
         }
       }
@@ -439,6 +455,10 @@ pkgs.symlinkJoin {
           pkgs.yq-go     # Required for papis.nvim
           pkgs.sqlite    # Required for papis.nvim
           pkgs.papis     # The actual papis program
+          # Python tools for pre-commit compatibility
+          pkgs.python312Packages.flake8
+          pkgs.python312Packages.isort
+          pkgs.python312Packages.pyupgrade
         ]
       )}
   '';
