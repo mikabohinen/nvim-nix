@@ -2,15 +2,16 @@
 
 let
   # Build custom plugins from source
-  customPlugins = {
-    # cornelis = pkgs.vimUtils.buildVimPluginFrom2Nix {
-    #   pname = "cornelis";
-    #   version = cornelis-src.shortRev or "master";
-    #   src = cornelis-src;
-    # };
-  };
+  customPlugins = { };
 
-  # Language setup - simplified with direct mapping
+  # Create SBCL with SWANK and other useful packages
+  sbclWithPackages = pkgs.sbcl.withPackages (ps: with ps; [
+    swank # SWANK server for REPL integration
+    alexandria # Utility library
+    bordeaux-threads # Portable threading
+  ]);
+
+  # Language setup
   supportedLanguages = {
     bash = {
       lsp = {
@@ -72,10 +73,6 @@ let
         serverName = "texlab";
       };
       treesitter = "latex";
-      formatter = {
-        name = "latexindent";
-        package = pkgs.texlive.combined.scheme-medium;
-      };
     };
     lua = {
       formatter = {
@@ -139,27 +136,54 @@ let
     # Autopairs
     nvim-autopairs
 
-    # Syntax/treesitter
+    # Syntax/treesitter with enhanced highlighting
     (nvim-treesitter.withPlugins (p:
       builtins.map (name: p.${name}) treesitterParsers
     ))
+    nvim-treesitter-textobjects # Better text objects
+    rainbow-delimiters-nvim # Rainbow parentheses
 
     # File navigation
     plenary-nvim
     telescope-nvim
+    oil-nvim
+
+    # Git integration
+    gitsigns-nvim
+    vim-fugitive
+
+    # UI improvements
+    lualine-nvim
+
+    # Essential editing
+    comment-nvim
+    undotree
 
     # Agda
     cornelis
 
+    # Which-key for keybinding discovery
+    which-key-nvim
+
+    # Common Lisp REPL Integration
+    conjure
+    vim-sexp
+    vim-sexp-mappings-for-regular-people
+
+    # Enhanced syntax highlighting
+    nvim-colorizer-lua
+    indent-blankline-nvim
+
     # Formatting
     conform-nvim
 
-    # Requested extra plugins
+    # Colorscheme
+    nightfox-nvim
+
+    # Utility plugins
     vim-sleuth
     unicode-vim
-
-    # References
-    papis-nvim
+    vim-surround
   ];
 
   # Neovim configuration
@@ -175,6 +199,153 @@ let
     -- Global settings
     vim.g.mapleader = " "
     vim.g.maplocalleader = ","
+
+    -- Which-key setup (setup early so other plugins can use it)
+    local wk = require("which-key")
+    wk.setup({
+      preset = "modern",
+      delay = 300,
+      expand = 1, -- expand groups when <= n mappings
+      notify = true,
+      win = {
+        border = "rounded",
+        padding = { 1, 2 },
+      },
+      layout = {
+        spacing = 3,
+      },
+    })
+
+    -- Additional keybindings for new features
+    -- Oil file explorer
+    vim.keymap.set('n', '<leader>fe', '<cmd>Oil<cr>', { desc = "Open file explorer" })
+    vim.keymap.set('n', '-', '<cmd>Oil<cr>', { desc = "Open parent directory" })
+
+    -- Git operations (gitsigns)
+    vim.keymap.set('n', '<leader>gb', '<cmd>Gitsigns toggle_current_line_blame<cr>', { desc = "Toggle git blame" })
+    vim.keymap.set('n', '<leader>gp', '<cmd>Gitsigns preview_hunk<cr>', { desc = "Preview hunk" })
+    vim.keymap.set('n', '<leader>gr', '<cmd>Gitsigns reset_hunk<cr>', { desc = "Reset hunk" })
+    vim.keymap.set('n', '<leader>gs', '<cmd>Gitsigns stage_hunk<cr>', { desc = "Stage hunk" })
+    vim.keymap.set('n', '<leader>gu', '<cmd>Gitsigns undo_stage_hunk<cr>', { desc = "Undo stage hunk" })
+    vim.keymap.set('n', '<leader>gd', '<cmd>Gitsigns diffthis<cr>', { desc = "Diff this" })
+    vim.keymap.set('n', '[h', '<cmd>Gitsigns prev_hunk<cr>', { desc = "Previous hunk" })
+    vim.keymap.set('n', ']h', '<cmd>Gitsigns next_hunk<cr>', { desc = "Next hunk" })
+
+    -- Git operations (fugitive)
+    vim.keymap.set('n', '<leader>gg', '<cmd>Git<cr>', { desc = "Git status" })
+    vim.keymap.set('n', '<leader>gc', '<cmd>Git commit<cr>', { desc = "Git commit" })
+    vim.keymap.set('n', '<leader>gP', '<cmd>Git push<cr>', { desc = "Git push" })
+    vim.keymap.set('n', '<leader>gl', '<cmd>Git pull<cr>', { desc = "Git pull" })
+    vim.keymap.set('n', '<leader>gB', '<cmd>Git blame<cr>', { desc = "Git blame (fugitive)" })
+    vim.keymap.set('n', '<leader>gD', '<cmd>Gdiffsplit<cr>', { desc = "Git diff split" })
+    vim.keymap.set('n', '<leader>gw', '<cmd>Gwrite<cr>', { desc = "Git write (stage file)" })
+    vim.keymap.set('n', '<leader>gR', '<cmd>Gread<cr>', { desc = "Git read (checkout file)" })
+
+    -- Undotree
+    vim.keymap.set('n', '<leader>ut', vim.cmd.UndotreeToggle, { desc = "Toggle undotree" })
+
+    -- Enhanced syntax highlighting setup
+    -- Treesitter configuration
+    require('nvim-treesitter.configs').setup({
+      ensure_installed = {}, -- We manage parsers through Nix
+      highlight = {
+        enable = true,
+        additional_vim_regex_highlighting = false,
+      },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = "gnn",
+          node_incremental = "grn",
+          scope_incremental = "grc",
+          node_decremental = "grm",
+        },
+      },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ["af"] = "@function.outer",
+            ["if"] = "@function.inner",
+            ["ac"] = "@class.outer",
+            ["ic"] = "@class.inner",
+            ["al"] = "@loop.outer",
+            ["il"] = "@loop.inner",
+            ["aa"] = "@parameter.outer",
+            ["ia"] = "@parameter.inner",
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start = {
+            ["]f"] = "@function.outer",
+            ["]c"] = "@class.outer",
+          },
+          goto_next_end = {
+            ["]F"] = "@function.outer",
+            ["]C"] = "@class.outer",
+          },
+          goto_previous_start = {
+            ["[f"] = "@function.outer",
+            ["[c"] = "@class.outer",
+          },
+          goto_previous_end = {
+            ["[F"] = "@function.outer",
+            ["[C"] = "@class.outer",
+          },
+        },
+      },
+    })
+
+    -- Color highlighting for hex codes, rgb(), etc.
+    require('colorizer').setup({
+      filetypes = {
+        "*", -- Enable for all files
+        css = { rgb_fn = true }, -- Enable parsing rgb(...) functions in css
+        html = { names = false }, -- Disable parsing "names" like Blue or Gray
+      },
+      user_default_options = {
+        RGB = true,      -- #RGB hex codes
+        RRGGBB = true,   -- #RRGGBB hex codes
+        names = true,    -- "Name" codes like Blue or blue
+        RRGGBBAA = true, -- #RRGGBBAA hex codes
+        rgb_fn = true,   -- CSS rgb() and rgba() functions
+        hsl_fn = true,   -- CSS hsl() and hsla() functions
+        css = true,      -- Enable all CSS features
+        css_fn = true,   -- Enable all CSS *functions*
+        mode = "background", -- Set the display mode
+      },
+    })
+
+    -- Indentation guides
+    require('ibl').setup({
+      indent = {
+        char = "│",
+        tab_char = "│",
+      },
+      scope = {
+        enabled = true,
+        show_start = true,
+        show_end = true,
+        highlight = { "Function", "Label" },
+      },
+      exclude = {
+        filetypes = {
+          "help",
+          "alpha",
+          "dashboard",
+          "neo-tree",
+          "Trouble",
+          "lazy",
+          "mason",
+          "notify",
+          "toggleterm",
+          "lazyterm",
+        },
+      },
+    })
 
     -- LSP setup
     local lspconfig = require('lspconfig')
@@ -238,18 +409,197 @@ let
       conform.format({ async = true, lsp_fallback = true })
     end, { desc = "Format buffer" })
 
-    -- Auto-pairs setup
-    require('nvim-autopairs').setup{}
+    -- Auto-pairs setup with Lisp-friendly configuration
+    require('nvim-autopairs').setup({
+      disable_filetype = { "TelescopePrompt", "vim" },
+      disable_in_macro = false,
+      disable_in_visualblock = false,
+      disable_in_replace_mode = true,
+      ignored_next_char = [=[[%w%%%'%[%"%.%`%$]]=],
+      enable_moveright = true,
+      enable_afterquote = true,
+      enable_check_bracket_line = false,  -- This is the key setting for Lisp
+      enable_bracket_in_quote = true,
+      enable_abbr = false,
+      break_undo = true,
+      check_ts = false,
+      map_bs = true,
+      map_c_h = false,
+      map_c_w = false,
+    })
+
+    -- Configure autopairs for better Lisp experience
+    local npairs = require('nvim-autopairs')
+
+    -- Disable smart bracket checking in Lisp files
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = {"lisp", "commonlisp", "scheme", "clojure"},
+      callback = function()
+        -- Simple rule: always insert () when typing ( in Lisp files
+        vim.keymap.set('i', '(', '()<Left>', { buffer = true, desc = 'Insert () pair' })
+      end,
+    })
 
     -- Telescope setup
     require('telescope').setup{}
-    vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files)
-    vim.keymap.set('n', '<leader><leader>', require('telescope.builtin').find_files)
-    vim.keymap.set('n', '<leader>fw', require('telescope.builtin').live_grep)
-    vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers)
+    vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, { desc = "Find files" })
+    vim.keymap.set('n', '<leader><leader>', require('telescope.builtin').find_files, { desc = "Find files" })
+    vim.keymap.set('n', '<leader>fw', require('telescope.builtin').live_grep, { desc = "Live grep" })
+    vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, { desc = "Find buffers" })
 
-    -- User custom configuration for Agda
-    vim.cmd 'colorscheme quiet'
+    -- Git integration with gitsigns
+    require('gitsigns').setup({
+      signs = {
+        add          = { text = '│' },
+        change       = { text = '│' },
+        delete       = { text = '_' },
+        topdelete    = { text = '‾' },
+        changedelete = { text = '~' },
+        untracked    = { text = '┆' },
+      },
+      current_line_blame = false,
+      current_line_blame_opts = {
+        virt_text = true,
+        virt_text_pos = 'eol',
+        delay = 1000,
+      },
+    })
+
+    -- Simple statusline
+    require('lualine').setup({
+      options = {
+        theme = 'auto',
+        component_separators = { left = ''', right = ''' },
+        section_separators = { left = ''', right = ''' },
+      },
+      sections = {
+        lualine_a = {'mode'},
+        lualine_b = {'branch', 'diff', 'diagnostics'},
+        lualine_c = {'filename'},
+        lualine_x = {'encoding', 'fileformat', 'filetype'},
+        lualine_y = {'progress'},
+        lualine_z = {'location'}
+      },
+    })
+
+    -- Oil.nvim - edit directories like buffers
+    require('oil').setup({
+      default_file_explorer = true,
+      delete_to_trash = true,
+      skip_confirm_for_simple_edits = true,
+      view_options = {
+        show_hidden = false,
+        natural_order = true,
+      },
+      float = {
+        padding = 2,
+        max_width = 90,
+        max_height = 0,
+      },
+      keymaps = {
+        ["g?"] = "actions.show_help",
+        ["<CR>"] = "actions.select",
+        ["<C-v>"] = "actions.select_vsplit",
+        ["<C-x>"] = "actions.select_split",
+        ["<C-t>"] = "actions.select_tab",
+        ["<C-p>"] = "actions.preview",
+        ["<C-c>"] = "actions.close",
+        ["q"] = "actions.close",
+        ["-"] = "actions.parent",
+        ["_"] = "actions.open_cwd",
+        ["`"] = "actions.cd",
+        ["~"] = "actions.tcd",
+        ["gs"] = "actions.change_sort",
+        ["gx"] = "actions.open_external",
+        ["g."] = "actions.toggle_hidden",
+      },
+    })
+
+    -- Comment toggling
+    require('Comment').setup({
+      padding = true,
+      sticky = true,
+      toggler = {
+        line = 'gcc',
+        block = 'gbc',
+      },
+      opleader = {
+        line = 'gc',
+        block = 'gb',
+      },
+      extra = {
+        above = 'gcO',
+        below = 'gco',
+        eol = 'gcA',
+      },
+    })
+
+    -- Register which-key groups and mappings
+    wk.add({
+      -- Leader key groups
+      { "<leader>f", group = "Find (Telescope)" },
+      { "<leader>c", group = "Code" },
+      { "<leader>g", group = "Git" },
+      { "<leader>u", group = "UI/Utils" },
+
+      -- File operations
+      { "<leader>ff", desc = "Find files" },
+      { "<leader>fw", desc = "Find words (live grep)" },
+      { "<leader>fb", desc = "Find buffers" },
+      { "<leader>fe", desc = "File explorer (Oil)" },
+
+      -- Code operations
+      { "<leader>cf", desc = "Format buffer" },
+      { "<leader>e", desc = "Show diagnostics" },
+      { "<leader>q", desc = "Diagnostic quickfix" },
+
+      -- Git operations
+      { "<leader>gb", desc = "Toggle git blame" },
+      { "<leader>gp", desc = "Preview hunk" },
+      { "<leader>gr", desc = "Reset hunk" },
+      { "<leader>gs", desc = "Stage hunk" },
+      { "<leader>gu", desc = "Undo stage hunk" },
+      { "<leader>gd", desc = "Diff this" },
+
+      -- UI/Utilities
+      { "<leader>ut", desc = "Toggle undotree" },
+
+      -- Diagnostics
+      { "[d", desc = "Previous diagnostic" },
+      { "]d", desc = "Next diagnostic" },
+      { "[h", desc = "Previous git hunk" },
+      { "]h", desc = "Next git hunk" },
+
+      -- vim-surround operations
+      { "cs", desc = "Change surrounding" },
+      { "ds", desc = "Delete surrounding" },
+      { "ys", desc = "Add surrounding" },
+      { mode = "v", { "S", desc = "Surround selection" } },
+
+      -- Comment operations
+      { "gcc", desc = "Toggle line comment" },
+      { "gbc", desc = "Toggle block comment" },
+      { mode = "v", { "gc", desc = "Toggle comment" } },
+      { mode = "v", { "gb", desc = "Toggle block comment" } },
+
+      -- Treesitter navigation
+      { "]f", desc = "Next function" },
+      { "[f", desc = "Previous function" },
+      { "]c", desc = "Next class" },
+      { "[c", desc = "Previous class" },
+      { "]F", desc = "Next function end" },
+      { "[F", desc = "Previous function end" },
+
+      -- Treesitter selection
+      { "gnn", desc = "Init selection" },
+      { "grn", desc = "Increment selection" },
+      { "grc", desc = "Increment scope" },
+      { "grm", desc = "Decrement selection" },
+    })
+
+    -- Using a colorscheme that works well with enhanced syntax highlighting
+    vim.cmd 'colorscheme nightfox'
+
     vim.g.cornelis_agda_prefix = "<C-g>"
 
     -- Set up autocommands for Agda files
@@ -257,26 +607,31 @@ let
         pattern = "*.agda",
         callback = function()
             -- Key mappings for Agda files
-            local keymaps = {
-                {"<leader>l", ":CornelisLoad<CR>"},
-                {"<leader>r", ":CornelisRefine<CR>"},
-                {"<leader>d", ":CornelisMakeCase<CR>"},
-                {"<leader>,", ":CornelisTypeContext<CR>"},
-                {"<leader>.", ":CornelisTypeContextInfer<CR>"},
-                {"<leader>n", ":CornelisSolve<CR>"},
-                {"<leader>a", ":CornelisAuto<CR>"},
-                {"<leader>m", ":CornelisMakeCase<CR>"},
-                {"gd",        ":CornelisGoToDefinition<CR>"},
-                {"[/",        ":CornelisPrevGoal<CR>"},
-                {"]/",        ":CornelisNextGoal<CR>"},
-                {"<C-A>",     ":CornelisInc<CR>"},
-                {"<C-X>",     ":CornelisDec<CR>"}
+            local agda_keymaps = {
+                {"<leader>l", ":CornelisLoad<CR>", "Load Agda file"},
+                {"<leader>r", ":CornelisRefine<CR>", "Refine goal"},
+                {"<leader>d", ":CornelisMakeCase<CR>", "Make case"},
+                {"<leader>,", ":CornelisTypeContext<CR>", "Type context"},
+                {"<leader>.", ":CornelisTypeContextInfer<CR>", "Type context infer"},
+                {"<leader>n", ":CornelisSolve<CR>", "Solve goal"},
+                {"<leader>a", ":CornelisAuto<CR>", "Auto solve"},
+                {"<leader>m", ":CornelisMakeCase<CR>", "Make case"},
+                {"gd",        ":CornelisGoToDefinition<CR>", "Go to definition"},
+                {"[/",        ":CornelisPrevGoal<CR>", "Previous goal"},
+                {"]/",        ":CornelisNextGoal<CR>", "Next goal"},
+                {"<C-A>",     ":CornelisInc<CR>", "Increment"},
+                {"<C-X>",     ":CornelisDec<CR>", "Decrement"}
             }
 
-            -- Apply each keymap
-            for _, map in ipairs(keymaps) do
-                vim.keymap.set("n", map[1], map[2], { buffer = true })
+            -- Apply each keymap and register with which-key
+            local agda_mappings = {}
+            for _, map in ipairs(agda_keymaps) do
+                vim.keymap.set("n", map[1], map[2], { buffer = true, desc = map[3] })
+                table.insert(agda_mappings, { map[1], desc = map[3], buffer = true })
             end
+
+            -- Register Agda specific which-key mappings
+            wk.add(agda_mappings)
 
             vim.fn['cornelis#bind_input']("nat", "ℕ")
         end
@@ -288,117 +643,177 @@ let
         command = "CornelisCloseInfoWindows"
     })
 
-    -- Using Neovim's native completion (no nvim-cmp)
+    -- Common Lisp SWANK/Conjure configuration
+    -- Using Nixpkgs Common Lisp infrastructure with pre-built SWANK
+    vim.g['conjure#client#common_lisp#swank#connection#default_host'] = "127.0.0.1"
+    vim.g['conjure#client#common_lisp#swank#connection#default_port'] = "4005"
+    vim.g['conjure#log#hud#enabled'] = false
+    vim.g['conjure#log#hud#passive_close_delay'] = 0
+    vim.g['conjure#client#common_lisp#swank#eval#result_comment_prefix'] = "; => "
 
-    -- papis.nvim setup
-    require('papis').setup({
-      -- Enable default keymaps for easier use
-      enable_keymaps = true,
+    -- Common Lisp file type configuration
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = {"lisp", "commonlisp"},
+      callback = function()
+        vim.opt_local.lisp = true
+        vim.opt_local.showmatch = true
+        vim.opt_local.matchtime = 3
 
-      -- Customize the filetypes that will activate papis.nvim
-      init_filetypes = { "markdown", "tex", "norg", "yaml", "typst" },
+        -- Enhanced syntax options for Lisp
+        vim.opt_local.syntax = "lisp"
+        vim.opt_local.conceallevel = 0  -- Don't hide any characters
+        vim.opt_local.cursorline = true -- Highlight current line
 
-      -- Enable icons for better visual experience
-      enable_icons = true,
+        -- Better folding for Lisp
+        vim.opt_local.foldmethod = "expr"
+        vim.opt_local.foldexpr = "nvim_treesitter#foldexpr()"
+        vim.opt_local.foldenable = false -- Start with folds open
 
-      -- Store database in a persistent location
-      db_path = vim.fn.expand("~/.local/share/papis_db/papis-nvim.sqlite3"),
+        -- Enhanced lispwords for better indentation
+        vim.opt_local.lispwords:append({
+          "defpackage", "in-package", "defclass", "defgeneric",
+          "defmethod", "defmacro", "defun", "defvar", "defparameter",
+          "defconstant", "defstruct", "deftype", "define-condition",
+          "let*", "lambda", "case", "ccase", "ecase", "typecase",
+          "etypecase", "ctypecase", "when", "unless", "cond",
+          "loop", "do", "do*", "dotimes", "dolist", "with-slots",
+          "with-accessors", "handler-case", "handler-bind",
+          "restart-case", "restart-bind", "unwind-protect",
+          "multiple-value-bind", "destructuring-bind"
+        })
 
-      -- Disable the completion module since we're not using nvim-cmp
-      enable_modules = {
-        ["search"] = true,
-        ["completion"] = false,  -- Disable completion module that requires nvim-cmp
-        ["at-cursor"] = true,
-        ["formatter"] = true,
-        ["colors"] = true,
-        ["base"] = true,
-        ["debug"] = true,  -- Enable debug module to help diagnose issues
-      },
+        -- Common Lisp specific keybindings
+        local opts = { buffer = true, silent = true }
 
-      -- Configuration for the formatter module (customize for markdown notes)
-      ["formatter"] = {
-        format_notes = function(entry)
-          -- Format for the note title
-          local title_format = {
-            { "author", "%s ", "" },
-            { "year", "(%s) ", "" },
-            { "title", "%s", "" },
-          }
-          -- Format the strings with information in the entry
-          local title = require("papis.utils"):format_display_strings(entry, title_format, true)
-          -- Grab only the strings (and disregard highlight groups)
-          for k, v in ipairs(title) do
-            title[k] = v[1]
-          end
-          -- Define all the lines to be inserted
-          local lines = {
-            "---",
-            'title: "Notes -- ' .. table.concat(title) .. '"',
-            "date: " .. os.date("%Y-%m-%d"),
-            "tags: [notes, reference]",
-            "---",
-            "",
-            "# " .. table.concat(title),
-            "",
-            "## Summary",
-            "",
-            "## Key Points",
-            "",
-            "## Notes",
-            "",
-            "## References",
-            "",
-          }
-          return lines
-        end,
+        -- Conjure REPL keybindings
+        vim.keymap.set('n', '<localleader>ee', '<cmd>ConjureEval<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Evaluate form under cursor' }))
+        vim.keymap.set('n', '<localleader>er', '<cmd>ConjureEvalRoot<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Evaluate root form' }))
+        vim.keymap.set('n', '<localleader>ef', '<cmd>ConjureEvalFile<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Evaluate file' }))
+        vim.keymap.set('n', '<localleader>eb', '<cmd>ConjureEvalBuf<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Evaluate buffer' }))
+        vim.keymap.set('n', '<localleader>ls', '<cmd>ConjureLogSplit<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Open log in split' }))
+        vim.keymap.set('n', '<localleader>lv', '<cmd>ConjureLogVSplit<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Open log in vsplit' }))
+        vim.keymap.set('n', '<localleader>lt', '<cmd>ConjureLogTab<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Open log in tab' }))
 
-        -- Format for inserting references
-        format_references = function(entry)
-          local reference_format = {
-            { "author",  "%s ",   "" },
-            { "year",    "(%s). ", "" },
-            { "title",   "%s. ",  "" },
-            { "journal", "%s. ",    "" },
-            { "volume",  "%s",    "" },
-            { "number",  "(%s)",  "" },
-          }
-          local reference_data = require("papis.utils"):format_display_strings(entry, reference_format)
-          for k, v in ipairs(reference_data) do
-            reference_data[k] = v[1]
-          end
-          local lines = { table.concat(reference_data) }
-          return lines
-        end,
-      },
+        -- Connect to SWANK
+        vim.keymap.set('n', '<localleader>cf', '<cmd>ConjureConnect<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Connect to SWANK' }))
 
-      -- Custom keybindings (in addition to default ones)
-      ["keymaps"] = {
-        -- Search your bibliography
-        vim.keymap.set('n', '<leader>ps', '<cmd>Papis search<CR>', { desc = "Papis search" }),
-        -- Show citation info at cursor
-        vim.keymap.set('n', '<leader>pi', '<cmd>Papis at-cursor show-popup<CR>', { desc = "Papis show info" }),
-        -- Open file associated with citation at cursor
-        vim.keymap.set('n', '<leader>pf', '<cmd>Papis at-cursor open-file<CR>', { desc = "Papis open file" }),
-        -- Open note associated with citation at cursor
-        vim.keymap.set('n', '<leader>pn', '<cmd>Papis at-cursor open-note<CR>', { desc = "Papis open note" }),
-        -- Edit citation info
-        vim.keymap.set('n', '<leader>pe', '<cmd>Papis at-cursor edit<CR>', { desc = "Papis edit entry" }),
-      }
+        -- Documentation lookup
+        vim.keymap.set('n', 'K', '<cmd>ConjureDocWord<cr>',
+          vim.tbl_extend('force', opts, { desc = 'Show documentation' }))
+
+        -- Register Common Lisp specific which-key mappings
+        wk.add({
+          { "<localleader>e", group = "Evaluate", buffer = true },
+          { "<localleader>l", group = "Log", buffer = true },
+          { "<localleader>c", group = "Connect", buffer = true },
+          { "<localleader>w", group = "Wrap", buffer = true },
+
+          -- Evaluation
+          { "<localleader>ee", desc = "Eval form at cursor", buffer = true },
+          { "<localleader>er", desc = "Eval root form", buffer = true },
+          { "<localleader>ef", desc = "Eval file", buffer = true },
+          { "<localleader>eb", desc = "Eval buffer", buffer = true },
+
+          -- Log windows
+          { "<localleader>ls", desc = "Log split", buffer = true },
+          { "<localleader>lv", desc = "Log vsplit", buffer = true },
+          { "<localleader>lt", desc = "Log tab", buffer = true },
+
+          -- Connection
+          { "<localleader>cf", desc = "Connect to SWANK", buffer = true },
+
+          -- Documentation
+          { "K", desc = "Show documentation", buffer = true },
+
+          -- vim-sexp movement
+          { "(", desc = "Move to previous form", buffer = true },
+          { ")", desc = "Move to next form", buffer = true },
+          { "[[", desc = "Move to previous top-level form", buffer = true },
+          { "]]", desc = "Move to next top-level form", buffer = true },
+          { "[e", desc = "Move to previous element", buffer = true },
+          { "]e", desc = "Move to next element", buffer = true },
+
+          -- vim-sexp slurping and barfing
+          { ">)", desc = "Slurp forward", buffer = true },
+          { "<)", desc = "Barf forward", buffer = true },
+          { ">}", desc = "Slurp backward", buffer = true },
+          { "<}", desc = "Barf backward", buffer = true },
+
+          -- vim-sexp wrapping (localleader + w + character)
+          { "<localleader>w(", desc = "Wrap with ()", buffer = true },
+          { "<localleader>w[", desc = "Wrap with []", buffer = true },
+          { "<localleader>w{", desc = "Wrap with {}", buffer = true },
+          { "<localleader>w\"", desc = "Wrap with quotes", buffer = true },
+
+          -- vim-sexp structural editing
+          { "dsf", desc = "Delete surrounding form", buffer = true },
+          { "<localleader>S", desc = "Splice form", buffer = true },
+          { "<localleader>r", desc = "Raise form", buffer = true },
+          { "<localleader>O", desc = "Raise element", buffer = true },
+
+          -- vim-sexp insertion
+          { "<localleader>h", desc = "Insert at head", buffer = true },
+          { "<localleader>t", desc = "Insert at tail", buffer = true },
+
+          -- Visual mode selections
+          { mode = "v", { "af", desc = "Select outer form", buffer = true } },
+          { mode = "v", { "if", desc = "Select inner form", buffer = true } },
+          { mode = "v", { "ae", desc = "Select outer element", buffer = true } },
+          { mode = "v", { "ie", desc = "Select inner element", buffer = true } },
+          { mode = "v", { "<localleader>w", desc = "Wrap selection", buffer = true } },
+        })
+      end,
     })
 
-    -- Load papis database on startup
-    vim.api.nvim_create_autocmd("User", {
-      pattern = "PapisStarted",
-      callback = function()
-        -- Check if database exists, if not prompt user to load it
-        local Path = require("pathlib")
-        local db_path = Path:new(vim.fn.expand("~/.local/share/papis_db/papis-nvim.sqlite3"))
+    -- Helper commands for SWANK
+    vim.api.nvim_create_user_command('SwankStart', function()
+      local cmd = [[sbcl --eval "(load (sb-ext:posix-getenv \"ASDF\"))" --eval "(asdf:load-system 'swank)" --eval "(swank:create-server :port 4005 :dont-close t)" &]]
+      vim.fn.system(cmd)
+      print("SWANK server starting on port 4005...")
+      print("Once started, use <localleader>cf to connect")
+    end, { desc = 'Start SWANK server' })
 
-        if not db_path:exists() then
-          print("papis.nvim database not found. Please run :Papis reload data to initialize it.")
-          print("If you're seeing errors about missing library directories, make sure they exist at ~/Documents/papers and ~/Documents/books")
-        end
-      end
+    vim.api.nvim_create_user_command('SwankConnect', function()
+      vim.cmd('ConjureConnect 127.0.0.1 4005')
+    end, { desc = 'Connect to SWANK server' })
+
+    -- Available Common Lisp packages (pre-installed via Nixpkgs):
+    -- swank, alexandria, bordeaux-threads, quicklisp
+    -- To use them in SBCL: (asdf:load-system 'package-name)
+    -- To add more packages, edit sbclWithPackages in default.nix
+
+    -- Additional which-key mappings for LSP (when available)
+    vim.api.nvim_create_autocmd('LspAttach', {
+      callback = function(event)
+        local opts = { buffer = event.buf }
+
+        -- LSP keybindings
+        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = 'Go to definition' }))
+        vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = 'Show references' }))
+        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = 'Go to implementation' }))
+        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = 'Rename symbol' }))
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', opts, { desc = 'Code actions' }))
+        vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = 'Hover documentation' }))
+
+        -- Register LSP which-key mappings
+        wk.add({
+          { "gd", desc = "Go to definition", buffer = event.buf },
+          { "gr", desc = "Show references", buffer = event.buf },
+          { "gi", desc = "Go to implementation", buffer = event.buf },
+          { "<leader>r", group = "Refactor", buffer = event.buf },
+          { "<leader>rn", desc = "Rename symbol", buffer = event.buf },
+          { "<leader>ca", desc = "Code actions", buffer = event.buf },
+          { "K", desc = "Hover documentation", buffer = event.buf },
+        })
+      end,
     })
   '';
 
@@ -420,7 +835,7 @@ let
     desktopName = "Neovim";
     genericName = "Text Editor";
     comment = "Edit text files";
-    exec = "nvim %F";
+    exec = "kitty -e nvim %F";
     icon = "nvim";
     terminal = true;
     categories = [ "Utility" "TextEditor" "Development" ];
@@ -442,7 +857,7 @@ let
 in
 pkgs.symlinkJoin {
   name = "my-neovim";
-  paths = [ neovimWrapped desktopItem ]; # Include the desktop item here
+  paths = [ neovimWrapped desktopItem ];
   buildInputs = [ pkgs.makeWrapper ];
 
   # Add required runtime dependencies
@@ -452,9 +867,11 @@ pkgs.symlinkJoin {
         languageServers ++ formatters ++ [
           pkgs.ripgrep
           pkgs.fd
-          pkgs.yq-go     # Required for papis.nvim
-          pkgs.sqlite    # Required for papis.nvim
-          pkgs.papis     # The actual papis program
+          pkgs.kitty
+          pkgs.git
+          # Common Lisp development tools
+          sbclWithPackages
+          pkgs.rlwrap
           # Python tools for pre-commit compatibility
           pkgs.python312Packages.flake8
           pkgs.python312Packages.isort
