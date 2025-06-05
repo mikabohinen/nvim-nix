@@ -22,7 +22,6 @@
           ];
         };
 
-        # Import your neovim configuration
         myNeovim = pkgs.callPackage ./default.nix {
           inherit pkgs;
         };
@@ -48,13 +47,11 @@
           neovim = myNeovim;
         };
 
-        # For development/testing
         apps.default = {
           type = "app";
           program = "${myNeovim}/bin/nvim";
         };
 
-        # Make the NixOS module available
         nixosModules.default = nixosModule;
       }
     );

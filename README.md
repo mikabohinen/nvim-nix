@@ -88,29 +88,6 @@ Add to your `flake.nix`:
 }
 ```
 
-### In Home Manager
-
-```nix
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager";
-    nvim-nix.url = "github:mikabohinen/nvim-nix";
-  };
-
-  outputs = { nixpkgs, home-manager, nvim-nix, ... }: {
-    homeConfigurations."yourusername" = home-manager.lib.homeManagerConfiguration {
-      # ...
-      modules = [
-        {
-          home.packages = [ nvim-nix.packages.${system}.default ];
-        }
-      ];
-    };
-  };
-}
-```
-
 ## Key Bindings
 
 ### Core Philosophy
@@ -133,8 +110,8 @@ This configuration follows vim expert practices:
 
 ### Search Operations
 
-- `<leader>s` - Search in project (`:vimgrep`)
-- `<leader>S` - System grep
+- `<leader>s` - System grep
+- `<leader>S` - Search in project (`:vimgrep`)
 - `<Esc><Esc>` - Clear search highlighting
 - `/` - Enhanced search with very magic mode
 
