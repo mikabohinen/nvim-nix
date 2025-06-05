@@ -89,8 +89,8 @@ nnoremap ]b :bnext<CR>
 nnoremap <leader>d :bdelete<CR>
 
 " Search operations
-nnoremap <leader>s :vimgrep // **/*<Left><Left><Left><Left><Left><Left>
-nnoremap <leader>S :grep -r "" .<Left><Left><Left>
+nnoremap <leader>s :grep "" .<Left><Left><Left>
+nnoremap <leader>S :vimgrep // **/*<Left><Left><Left><Left><Left><Left>
 
 " Quickfix and location lists
 nnoremap <leader>q :copen<CR>
