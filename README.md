@@ -318,24 +318,6 @@ endfunction
 - `default.nix` - Main Neovim configuration and package definition
 - `flake.nix` - Nix flake with inputs and outputs
 - `vimrc.vim` - Core vim configuration following traditional patterns
-  - Add Nix development commands here for integrated workflow
-- `.gitignore` - Standard ignore patterns for Nix and development files
-
-## Development
-
-Clone and enter development shell:
-
-```bash
-git clone https://github.com/mikabohinen/nvim-nix.git
-cd nvim-nix
-nix develop
-```
-
-Test your changes:
-
-```bash
-nix run .
-```
 
 ## Contributing
 
