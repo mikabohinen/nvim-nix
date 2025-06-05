@@ -57,10 +57,10 @@ Following expert minimalism principles, only essential plugins are included:
 
 ```bash
 # Run directly
-nix run codeberg:mikabo/nvim-nix
+nix run github:mikabohinen/nvim-nix
 
 # Install to your profile
-nix profile install codeberg:mikabo/nvim-nix
+nix profile install github:mikabohinen/nvim-nix
 ```
 
 ### As a NixOS module
@@ -71,7 +71,7 @@ Add to your `flake.nix`:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nvim-nix.url = "codeberg:mikabo/nvim-nix";
+    nvim-nix.url = "github:mikabohinen/nvim-nix";
   };
   outputs = { self, nixpkgs, nvim-nix, ... }: {
     nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
@@ -95,7 +95,7 @@ Add to your `flake.nix`:
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
-    nvim-nix.url = "codeberg:mikabo/nvim-nix";
+    nvim-nix.url = "github:mikabohinen/nvim-nix";
   };
 
   outputs = { nixpkgs, home-manager, nvim-nix, ... }: {
@@ -326,7 +326,7 @@ endfunction
 Clone and enter development shell:
 
 ```bash
-git clone https://codeberg.org/mikabo/nvim-nix.git
+git clone https://github.com/mikabohinen/nvim-nix.git
 cd nvim-nix
 nix develop
 ```

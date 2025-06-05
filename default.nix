@@ -354,7 +354,7 @@ let
 
     -- Essential editing enhancements
     require('nvim-autopairs').setup({
-      disable_filetype = { "TelescopePrompt", "vim" },
+      disable_filetype = { "vim" },
       enable_check_bracket_line = false, -- Better for Lisp
     })
 
