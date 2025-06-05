@@ -4,6 +4,8 @@ let
   # Build custom plugins from source
   customPlugins = { };
 
+  vimrcConfig = pkgs.writeText "vimrc" (builtins.readFile ./vimrc.vim);
+
   # Create SBCL with SWANK and other useful packages
   sbclWithPackages = pkgs.sbcl.withPackages (ps: with ps; [
     swank # SWANK server for REPL integration
@@ -188,6 +190,8 @@ let
 
   # Neovim configuration
   neovimConfig = pkgs.writeText "init.lua" ''
+    vim.cmd.source('${vimrcConfig}')
+
     -- Basic settings
     vim.opt.number = true
     vim.opt.relativenumber = true
@@ -418,7 +422,7 @@ let
       ignored_next_char = [=[[%w%%%'%[%"%.%`%$]]=],
       enable_moveright = true,
       enable_afterquote = true,
-      enable_check_bracket_line = false,  -- This is the key setting for Lisp
+      enable_check_bracket_line = false,
       enable_bracket_in_quote = true,
       enable_abbr = false,
       break_undo = true,
