@@ -105,6 +105,20 @@ nnoremap [l :lprevious<CR>
 " Quick toggle
 nnoremap <silent> <leader>c :call ToggleQuickFix()<CR>
 
+" Global nix mappings under <leader>n
+nnoremap <leader>nr :NixRun
+nnoremap <leader>nb :NixBuild
+nnoremap <leader>ns :NixShell<CR>
+nnoremap <leader>nu :NixUpdate<CR>
+nnoremap <leader>nc :NixCheck<CR>
+nnoremap <leader>ni :NixInfo<CR>
+nnoremap <leader>nS :NixSearch
+nnoremap <leader>ne :NixEval
+nnoremap <leader>nC :NixClean<CR>
+
+" Quick file access
+nnoremap <leader>ef :EditFlake<CR>
+nnoremap <leader>ed :EditDefault<CR>
 
 " =============================================================================
 " FILE MANAGEMENT
@@ -208,6 +222,22 @@ augroup vimrc
 
 augroup END
 
+augroup nix_mappings
+  autocmd!
+
+  " Nix-specific mappings for .nix files
+  autocmd FileType nix nnoremap <buffer> <localleader>r :NixRun<CR>
+  autocmd FileType nix nnoremap <buffer> <localleader>b :NixBuild<CR>
+  autocmd FileType nix nnoremap <buffer> <localleader>c :NixCheck<CR>
+  autocmd FileType nix nnoremap <buffer> <localleader>u :NixUpdate<CR>
+  autocmd FileType nix nnoremap <buffer> <localleader>s :NixShell<CR>
+  autocmd FileType nix nnoremap <buffer> <localleader>i :NixInfo<CR>
+
+  " Global nix development mappings
+  autocmd FileType nix nnoremap <buffer> <leader>ef :EditFlake<CR>
+  autocmd FileType nix nnoremap <buffer> <leader>ed :EditDefault<CR>
+augroup END
+
 " =============================================================================
 " MISCELLANEOUS
 " =============================================================================
@@ -222,6 +252,172 @@ endif
 
 " Load matchit for better % matching
 packadd! matchit
+
+" =============================================================================
+" NIX INTEGRATION COMMANDS
+" =============================================================================
+
+" Helper function to run nix commands with proper output
+function! s:RunNixCommand(cmd, args, async)
+  let l:full_cmd = 'nix ' . a:cmd . ' ' . a:args
+
+  if a:async && (has('nvim') || has('job'))
+    " Async execution for long-running commands
+    echo '🚀 Running: ' . l:full_cmd
+
+    if has('nvim')
+      call jobstart(l:full_cmd, {
+        \ 'on_stdout': function('s:NixJobOutput'),
+        \ 'on_stderr': function('s:NixJobError'),
+        \ 'on_exit': function('s:NixJobExit'),
+        \ 'stdout_buffered': v:false,
+        \ 'stderr_buffered': v:false,
+        \ })
+    else
+      " Vim 8+ job support
+      call job_start(l:full_cmd, {
+        \ 'out_cb': function('s:NixJobOutputVim'),
+        \ 'err_cb': function('s:NixJobErrorVim'),
+        \ 'exit_cb': function('s:NixJobExitVim'),
+        \ })
+    endif
+  else
+    " Synchronous execution
+    echo '⏳ Executing: ' . l:full_cmd
+    let l:result = system(l:full_cmd)
+
+    if v:shell_error == 0
+      if !empty(l:result)
+        echo l:result
+      endif
+      echo '✓ ' . l:full_cmd . ' completed'
+    else
+      echohl ErrorMsg
+      echo '✗ ' . l:full_cmd . ' failed:'
+      echo l:result
+      echohl None
+    endif
+  endif
+endfunction
+
+" Job callback functions for Neovim
+function! s:NixJobOutput(job_id, data, event)
+  for line in a:data
+    if !empty(line)
+      echo line
+    endif
+  endfor
+endfunction
+
+function! s:NixJobError(job_id, data, event)
+  for line in a:data
+    if !empty(line)
+      echohl ErrorMsg | echo line | echohl None
+    endif
+  endfor
+endfunction
+
+function! s:NixJobExit(job_id, code, event)
+  if a:code == 0
+    echo '✓ Nix command completed successfully'
+  else
+    echohl ErrorMsg
+    echo '✗ Nix command failed with code ' . a:code
+    echohl None
+  endif
+endfunction
+
+" Job callback functions for Vim 8+
+function! s:NixJobOutputVim(channel, msg)
+  echo a:msg
+endfunction
+
+function! s:NixJobErrorVim(channel, msg)
+  echohl ErrorMsg | echo a:msg | echohl None
+endfunction
+
+function! s:NixJobExitVim(job, status)
+  if a:status == 0
+    echo '✓ Nix command completed successfully'
+  else
+    echohl ErrorMsg
+    echo '✗ Nix command failed with code ' . a:status
+    echohl None
+  endif
+endfunction
+
+" Nix command definitions
+command! -nargs=? -complete=custom,s:NixRunComplete NixRun
+  \ call s:RunNixCommand('run', empty(<q-args>) ? '.' : <q-args>, 1)
+
+command! -nargs=? -complete=custom,s:NixBuildComplete NixBuild
+  \ call s:RunNixCommand('build', empty(<q-args>) ? '.' : <q-args>, 1)
+
+command! -nargs=? NixShell call s:NixDevelopShell(<q-args>)
+
+command! -nargs=? -complete=custom,s:NixInputComplete NixUpdate
+  \ call s:RunNixCommand('flake update', empty(<q-args>) ? '' : '--update-input ' . <q-args>, 1)
+
+command! -nargs=* NixCheck
+  \ call s:RunNixCommand('flake check', <q-args>, 1)
+
+command! NixClean call s:NixClean()
+
+command! -nargs=? NixInfo
+  \ call s:RunNixCommand('flake show', empty(<q-args>) ? '.' : <q-args>, 0)
+
+command! -nargs=1 NixSearch
+  \ call s:RunNixCommand('search nixpkgs', <q-args>, 1)
+
+command! -nargs=+ NixWhyDepends
+  \ call s:RunNixCommand('why-depends', <q-args>, 0)
+
+command! -nargs=1 NixEval
+  \ call s:RunNixCommand('eval', '--expr ' . shellescape(<q-args>), 0)
+
+" Helper functions for specific commands
+function! s:NixDevelopShell(target)
+  let l:target = empty(a:target) ? '.' : a:target
+
+  if has('nvim')
+    split
+    execute 'terminal nix develop ' . l:target
+    startinsert
+  elseif has('terminal')
+    execute 'terminal nix develop ' . l:target
+  else
+    echo 'Opening nix develop shell in background...'
+    execute '!nix develop ' . l:target
+  endif
+endfunction
+
+function! s:NixClean()
+  let l:confirm = input('Clean nix store and remove old generations? (y/N): ')
+  if tolower(l:confirm) ==# 'y' || tolower(l:confirm) ==# 'yes'
+    echo '🧹 Cleaning nix store...'
+    call s:RunNixCommand('store gc', '', 1)
+    call s:RunNixCommand('profile wipe-history', '', 0)
+  else
+    echo 'Cancelled.'
+  endif
+endfunction
+
+" Completion functions
+function! s:NixRunComplete(ArgLead, CmdLine, CursorPos)
+  return ".#default\n.#neovim\n."
+endfunction
+
+function! s:NixBuildComplete(ArgLead, CmdLine, CursorPos)
+  return ".#default\n.#neovim\n."
+endfunction
+
+function! s:NixInputComplete(ArgLead, CmdLine, CursorPos)
+  return "nixpkgs\nflake-utils\nneovim-nightly-overlay"
+endfunction
+
+" Quick file editing commands
+command! EditFlake edit flake.nix
+command! EditDefault edit default.nix
 
 " =============================================================================
 " END OF CONFIGURATION

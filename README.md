@@ -1,6 +1,6 @@
 # Nvim-Nix
 
-A reproducible, declarative Neovim configuration using Nix flakes.
+A reproducible, declarative Neovim configuration using Nix flakes, following minimalist vim philosophy with essential modern enhancements.
 
 ## Features
 
@@ -9,45 +9,58 @@ A reproducible, declarative Neovim configuration using Nix flakes.
 - 🔌 **Extensible**: Easy to add new languages and plugins
 - 🚀 **Batteries included**: Pre-configured for multiple languages
 - 📦 **Declarative**: Configuration defined entirely in Nix
-- 📚 **Bibliography Management**: Integrated with papis.nvim for academic research and writing
+- 🎯 **Minimalist**: Expert-level vim foundation with essential Lua enhancements
+- 🔧 **Nix Integration**: Built-in commands for Nix development workflow
+
+## Philosophy
+
+This configuration follows the minimalist vim philosophy, building upon Tim Pope's sensible.vim principles while incorporating essential modern features that require Lua. The core is pure vimscript for maximum portability and expert-level efficiency, with targeted Lua enhancements for LSP, treesitter, and modern editing features.
 
 ## Supported Languages
 
-- Bash
-- Haskell
-- Java
-- Lisp
-- Markdown
-- Nix
-- LaTeX
-- Lua
-- Agda (with dedicated Cornelis support)
+- **Bash** - LSP (bashls), treesitter, formatter (shfmt)
+- **Haskell** - LSP (hls), treesitter, formatter (fourmolu)
+- **Java** - LSP (jdtls), treesitter, formatter (google-java-format)
+- **Common Lisp** - treesitter, REPL integration (Conjure + SWANK)
+- **Markdown** - treesitter, formatter (prettier)
+- **Nix** - LSP (nixd), treesitter, formatter (nixpkgs-fmt)
+- **LaTeX** - LSP (texlab), treesitter
+- **Lua** - formatter (stylua)
+- **Python** - LSP (pyright), treesitter, formatter (black)
+- **Agda** - Dedicated Cornelis support with proof assistant integration
 
-Each language comes with:
+Each language includes appropriate tooling:
 
 - LSP server (where applicable)
-- Treesitter parser
+- Treesitter parser for syntax highlighting
 - Code formatter
+- Language-specific features and key bindings
 
-## Integrated Tools
+## Essential Plugins
 
-- **Papis**: Bibliography and reference management directly in Neovim
-  - Requires [Papis](https://github.com/papis/papis), yq, and sqlite
+Following expert minimalism principles, only essential plugins are included:
+
+- **LSP & Language Support**: nvim-lspconfig, nvim-treesitter, nvim-treesitter-textobjects
+- **Expert Editing**: vim-surround, nvim-autopairs, vim-vinegar
+- **Git Integration**: gitsigns-nvim, vim-fugitive
+- **Specialized Language Support**: cornelis (Agda), conjure (Lisp REPL), vim-sexp
+- **Tool Integration**: conform-nvim (formatting), which-key-nvim (learning aid)
+- **Aesthetics**: nightfox-nvim colorscheme
 
 ## Installation
 
 ### Prerequisites
 
 - [Nix package manager](https://nixos.org/download.html) with flakes enabled
-- For the bibliography features, install [Papis](https://github.com/papis/papis)
 
 ### As a standalone application
 
 ```bash
 # Run directly
 nix run codeberg:mikabo/nvim-nix
+
 # Install to your profile
-nix profile install github:yourusername/nvim-nix
+nix profile install codeberg:mikabo/nvim-nix
 ```
 
 ### As a NixOS module
@@ -82,7 +95,7 @@ Add to your `flake.nix`:
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
-    nvim-nix.url = "github:yourusername/nvim-nix";
+    nvim-nix.url = "codeberg:mikabo/nvim-nix";
   };
 
   outputs = { nixpkgs, home-manager, nvim-nix, ... }: {
@@ -100,51 +113,146 @@ Add to your `flake.nix`:
 
 ## Key Bindings
 
-### General
+### Core Philosophy
 
-- `<Space>` - Leader key
-- `,` - Local leader key
+This configuration follows vim expert practices:
 
-### LSP
+- **Leader key**: `<Space>` for global operations
+- **Local leader**: `,` for filetype-specific operations
+- **Native vim commands**: Prioritized for file finding, searching, and navigation
+- **Consistent patterns**: Similar operations use similar key combinations
 
-- `<leader>e` - Show diagnostic at cursor
-- `[d` - Go to previous diagnostic
-- `]d` - Go to next diagnostic
-- `<leader>q` - Show diagnostics in location list
+### Essential Navigation
+
+- `<leader>f` - Find files (`:find **/*`)
+- `<leader>F` - Find files recursive
+- `<leader>b` - Switch buffer (`:buffer`)
+- `<leader>B` - Switch buffer in split
+- `[b` / `]b` - Previous/next buffer
+- `<leader>d` - Delete buffer
+
+### Search Operations
+
+- `<leader>s` - Search in project (`:vimgrep`)
+- `<leader>S` - System grep
+- `<Esc><Esc>` - Clear search highlighting
+- `/` - Enhanced search with very magic mode
+
+### Quickfix & Location Lists
+
+- `<leader>q` / `<leader>Q` - Open/close quickfix
+- `<leader>l` / `<leader>L` - Open/close location list
+- `]q` / `[q` - Next/previous quickfix
+- `]l` / `[l` - Next/previous location list
+- `<leader>c` - Toggle quickfix
+
+### LSP (when available)
+
+- `gd` - Go to definition
+- `gr` - Go to references
+- `gi` - Go to implementation
+- `K` - Hover documentation
+- `<leader>rn` - Rename symbol
+- `<leader>ca` - Code actions
 
 ### Formatting
 
-- `<leader>cf` - Format current buffer
+- `<leader>cf` - Format current buffer (manual)
+- Automatic formatting on save (configurable per filetype)
 
-### File Navigation
+### Git Integration
 
-- `<leader>ff` - Find files
-- `<leader><leader>` - Find files
-- `<leader>fw` - Live grep
-- `<leader>fb` - Browse buffers
+- `<leader>gb` - Toggle git blame
+- `<leader>gp` - Preview hunk
+- `<leader>gr` - Reset hunk
+- `<leader>gs` - Stage hunk
+- `<leader>gu` - Undo stage hunk
+- `[h` / `]h` - Previous/next hunk
 
-### Papis Bibliography Management
+### Treesitter Text Objects
 
-- `<leader>ps` - Search bibliography
-- `<leader>pi` - Show citation info at cursor
-- `<leader>pf` - Open file associated with citation at cursor
-- `<leader>pn` - Open note associated with citation at cursor
-- `<leader>pe` - Edit citation metadata at cursor
+- `af` / `if` - Around/inside function
+- `ac` / `ic` - Around/inside class
+- `al` / `il` - Around/inside loop
+- `aa` / `ia` - Around/inside parameter
+- `]f` / `[f` - Next/previous function
+- `]c` / `[c` - Next/previous class
 
-### Agda-specific
+### Agda-specific (Cornelis)
 
 - `<leader>l` - Load file
-- `<leader>r` - Refine
-- `<leader>d` / `<leader>m` - Make case
+- `<leader>r` - Refine goal
 - `<leader>,` - Type context
-- `<leader>.` - Type context infer
-- `<leader>n` - Solve
-- `<leader>a` - Auto
 - `gd` - Go to definition
-- `[/` - Previous goal
-- `]/` - Next goal
-- `<C-A>` - Increment
-- `<C-X>` - Decrement
+- `[/` / `]/` - Previous/next goal
+
+### Common Lisp (Conjure + SWANK)
+
+- `<localleader>ee` - Evaluate form
+- `<localleader>cf` - Connect to SWANK server
+- `:SwankStart` - Start SWANK server
+
+### Nix Development
+
+- `:NixRun [target]` - Run nix flake target
+- `:NixBuild [target]` - Build nix flake target
+- `:NixShell [target]` - Enter nix develop shell
+- `:NixUpdate [input]` - Update flake.lock (optionally specific input)
+- `:NixCheck` - Check flake for issues
+- `:NixClean` - Clean nix store (with confirmation)
+- `:NixInfo [target]` - Show flake outputs and structure
+- `:NixSearch <term>` - Search nixpkgs for packages
+- `:NixEval <expr>` - Evaluate nix expressions
+- `:NixWhyDepends <source> <target>` - Show dependency chain
+- `:EditFlake` / `:EditDefault` - Quick edit flake.nix/default.nix
+
+**Nix Leader Mappings** (global):
+
+- `<leader>nr` - `:NixRun ` (with prompt)
+- `<leader>nb` - `:NixBuild ` (with prompt)
+- `<leader>ns` - Enter nix develop shell
+- `<leader>nu` - Update flake.lock
+- `<leader>nc` - Check flake
+- `<leader>ni` - Show flake info
+- `<leader>nS` - Search packages (with prompt)
+- `<leader>ne` - Evaluate expression (with prompt)
+- `<leader>nC` - Clean nix store
+- `<leader>ef` - Edit flake.nix
+- `<leader>ed` - Edit default.nix
+
+**Nix File Mappings** (in .nix files):
+
+- `<localleader>r` - Run current flake
+- `<localleader>b` - Build current flake
+- `<localleader>c` - Check current flake
+- `<localleader>u` - Update flake.lock
+- `<localleader>s` - Enter nix shell
+- `<localleader>i` - Show flake info
+
+## Development Workflow
+
+### For Nix Projects
+
+1. **Quick Testing**: `:NixRun` or `<leader>nr` to test your current flake
+2. **Building**: `:NixBuild .#package` or `<leader>nb` to build specific outputs
+3. **Development**: `:NixShell` or `<leader>ns` to enter development environment
+4. **Updates**: `:NixUpdate` or `<leader>nu` to update dependencies
+5. **Checking**: `:NixCheck` or `<leader>nc` to validate your flake
+6. **Package Search**: `:NixSearch <term>` or `<leader>nS` to find packages
+
+**In .nix files**, use local leader mappings for quick access:
+
+- `<localleader>r` to run current flake
+- `<localleader>b` to build current flake
+- `<localleader>c` to check current flake
+
+### For General Development
+
+1. Use native vim commands for file navigation (`:find`, `:buffer`)
+2. Leverage quickfix lists for project-wide operations
+3. Use LSP features when available, fall back to native vim
+4. Format code with `<leader>cf` or rely on format-on-save
+5. Access project files quickly with `<leader>ef` (flake.nix) and `<leader>ed` (default.nix)
 
 ## Customization
 
@@ -153,15 +261,15 @@ Add to your `flake.nix`:
 Edit `default.nix` and add a new entry to `supportedLanguages`:
 
 ```nix
-python = {
+rust = {
   lsp = {
-    package = pkgs.nodePackages.pyright;
-    serverName = "pyright";
+    package = pkgs.rust-analyzer;
+    serverName = "rust_analyzer";
   };
-  treesitter = "python";
+  treesitter = "rust";
   formatter = {
-    name = "black";
-    package = pkgs.black;
+    name = "rustfmt";
+    package = pkgs.rustfmt;
   };
 };
 ```
@@ -174,49 +282,51 @@ Edit the `plugins` list in `default.nix`:
 plugins = with pkgs.vimPlugins; [
   # Existing plugins...
 
-  # Your new plugins
-  vim-fugitive
-  gitsigns-nvim
+  # Your new plugin
+  vim-commentary
 ];
 ```
 
-And add their configuration to `neovimConfig`:
+And add configuration to `neovimConfig` if needed.
 
-```nix
-neovimConfig = pkgs.writeText "init.lua" ''
-  -- Existing config...
+### Customizing Key Bindings
 
-  -- Git integration
-  require('gitsigns').setup()
+Core key bindings are defined in `vimrc.vim` following vim conventions. Language-specific and plugin bindings are configured in the Lua section of `default.nix`.
 
-  -- Fugitive mappings
-  vim.keymap.set('n', '<leader>gs', ':Git<CR>')
-'';
+**To add the Nix development commands**: Add the vimscript Nix integration code to the end of your `vimrc.vim` file. This provides comprehensive Nix workflow integration using traditional vim patterns.
+
+### Adding Custom Commands
+
+Follow the vimscript patterns in `vimrc.vim`:
+
+```vim
+" Simple command
+command! MyCommand echo "Hello"
+
+" Command with arguments and completion
+command! -nargs=? -complete=file MyEdit edit <args>
+
+" Command using helper function
+command! MyComplex call s:MyHelper()
+function! s:MyHelper()
+  " Complex logic here
+endfunction
 ```
 
-## Using Papis Bibliography Management
+## File Structure
 
-### First-time Setup
-
-When first using papis.nvim, you'll need to initialize the database:
-
-1. Open a file with one of the supported file types (markdown, tex, yaml, typst)
-2. Run `:Papis reload data` to create the initial database
-3. Wait for it to complete (this may take some time depending on your bibliography size)
-
-### Daily Usage
-
-- Use `<leader>ps` to search your bibliography and insert citations
-- Place your cursor over a citation and use `<leader>pi` to view details
-- Create and manage notes for your references with `<leader>pn`
-- Access PDFs and other attached files with `<leader>pf`
+- `default.nix` - Main Neovim configuration and package definition
+- `flake.nix` - Nix flake with inputs and outputs
+- `vimrc.vim` - Core vim configuration following traditional patterns
+  - Add Nix development commands here for integrated workflow
+- `.gitignore` - Standard ignore patterns for Nix and development files
 
 ## Development
 
 Clone and enter development shell:
 
 ```bash
-git clone https://github.com/yourusername/nvim-nix.git
+git clone https://codeberg.org/mikabo/nvim-nix.git
 cd nvim-nix
 nix develop
 ```
@@ -226,6 +336,26 @@ Test your changes:
 ```bash
 nix run .
 ```
+
+## Contributing
+
+This configuration follows these principles:
+
+1. **Vim-first**: Traditional vim patterns and commands are preferred
+2. **Minimal dependencies**: Only essential plugins that provide significant value
+3. **Reproducible**: Everything defined declaratively in Nix
+4. **Expert-friendly**: Optimized for efficiency and muscle memory
+5. **Language-agnostic**: Consistent patterns across all supported languages
+6. **Vimscript for commands**: Use vimscript for shell integration and commands, Lua only for features requiring it
+
+When contributing:
+
+- Prefer native vim solutions over plugin dependencies
+- Use vimscript for custom commands and shell integration
+- Reserve Lua for LSP, treesitter, and plugin configuration that requires it
+- Ensure all changes are reproducible across systems
+- Follow the existing patterns for language support
+- Document any new key bindings or features
 
 ## License
 
