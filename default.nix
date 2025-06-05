@@ -57,12 +57,24 @@ let
       lsp = {
         package = pkgs.nixd;
         serverName = "nixd";
+        settings = {
+          nixd = {
+            nixpkgs = {
+              expr = "import <nixpkgs> { }";
+            };
+            formatting = {
+              command = [ "nixpkgs-fmt" ];
+            };
+          };
+        };
       };
       treesitter = "nix";
       formatter = {
         name = "nixpkgs_fmt";
         package = pkgs.nixpkgs-fmt;
       };
+      tools = [ pkgs.nix-output-monitor pkgs.nix-tree ];
+      description = "Nix expression language";
     };
     latex = {
       lsp = {
