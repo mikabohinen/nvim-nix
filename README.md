@@ -6,7 +6,8 @@ minimalist vim philosophy with essential modern enhancements.
 ## Philosophy
 
 This configuration follows a minimalist approach. It embodies the belief that
-power comes from mastery of core tools, not accumulation of features.
+power comes from mastery of core tools, not accumulation of features. Every
+exclusion is intentional.
 
 ### Core Principles
 
