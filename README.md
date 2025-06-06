@@ -3,77 +3,14 @@
 A reproducible, declarative Neovim configuration using Nix flakes, following
 minimalist vim philosophy with essential modern enhancements.
 
-## Philosophy
-
-This configuration follows a minimalist approach. It embodies the belief that
-power comes from mastery of core tools, not accumulation of features. Every
-exclusion is intentional.
-
-### Core Principles
-
-**Vim-First Approach**: Modern features supplement, never replace, core Vim functionality. File finding uses `:find **/*`, searching uses `:grep` and `:vimgrep`, navigation relies on native commands. LSP and Treesitter enhance this foundation without replacing it.
-
-**Reproducible Development**: Nix ensures identical environments across machines. Every dependency, from language servers to formatters, is declaratively specified and automatically available.
-
-**Structural Thinking**: The configuration is organized around how you actually work - finding, searching, navigating, editing. Key mappings follow consistent patterns that scale with complexity.
-
-**Exceptions**: Only one language gets special treatment - Lisp. Vim's text objects and structural editing work so naturally with Lisp's uniform syntax that specialized tools like paredit aren't luxuries, they're baseline usability.
-
 ## Features
 
 - 🔄 **Reproducible**: Same setup on any machine with Nix
 - 🧩 **Modular**: Organized language support with LSP, formatters, and treesitter
 - 🔌 **Extensible**: Easy to add new languages and plugins
-- 🚀 **Batteries included**: Pre-configured for multiple languages
-- 📦 **Declarative**: Configuration defined entirely in Nix
+- 🚀 **Batteries available**: Pre-configured for multiple languages with external tools
 - 🔧 **Nix Integration**: Built-in commands for Nix development workflow
-
-## Supported Languages
-
-Each language includes appropriate tooling based on ecosystem maturity:
-
-- **Bash** - LSP (bashls), treesitter, formatter (shfmt)
-- **Haskell** - LSP (hls), treesitter, formatter (fourmolu)
-- **Java** - LSP (jdtls), treesitter, formatter (google-java-format)
-- **Common Lisp** - treesitter, structural editing
-- **Markdown** - treesitter, formatter (prettier)
-- **Nix** - LSP (nixd), treesitter, formatter (nixpkgs-fmt)
-- **LaTeX** - LSP (texlab), treesitter
-- **Lua** - formatter (stylua)
-- **Python** - LSP (pyright), treesitter, formatter (black)
-
-**Language Philosophy**: LSP + Treesitter + formatter is the standard approach. Lisp gets structural editing tools because Vim's text objects map perfectly to its uniform syntax. REPL development uses terminal integration rather than editor plugins.
-
-## Essential Plugins
-
-Only essential plugins are included:
-
-**Modern Necessities** (what vimscript can't handle well):
-
-- **nvim-lspconfig**: Language server integration
-- **nvim-treesitter + textobjects**: Enhanced syntax and structural navigation
-- **conform-nvim**: External formatter integration
-
-**Editing** (amplify core Vim strengths):
-
-- **vim-surround**: Text object manipulation
-- **vim-repeat**: Quality of life addition
-- **nvim-autopairs**: Intelligent bracket pairing
-- **vim-vinegar**: Enhanced netrw
-- **comment-nvim**: Structured commenting
-
-**Development Integration** (essential workflow tools):
-
-- **gitsigns-nvim + vim-fugitive**: Git integration
-- **which-key-nvim**: Learning aid for discovering mappings
-
-**Lisp Exception** (structural editing for uniform syntax):
-
-- **vim-sexp + mappings**: Paredit-style editing for s-expressions
-
-**Quality of Life**:
-
-- **nightfox-nvim**: Modern colorscheme (nice to have some aesthetics)
+- ⚡ **Minimal**: Only 8 essential plugins for maximum performance
 
 ## Installation
 
@@ -115,6 +52,87 @@ Add to your `flake.nix`:
   };
 }
 ```
+
+## Philosophy
+
+This configuration follows a minimalist approach. It embodies the belief that
+power comes from mastery of core tools, not accumulation of features. Every
+exclusion is intentional.
+
+### Core Principles
+
+**Vim-First Approach**: Modern features supplement, never replace, core Vim functionality. File finding uses `:find **/*`, searching uses `:grep` and `:vimgrep`, navigation relies on native commands. LSP and Treesitter enhance this foundation without replacing it.
+
+**Reproducible Development**: Nix ensures identical environments across machines. Every dependency, from language servers to formatters, is declaratively specified and automatically available.
+
+**Structural Thinking**: The configuration is organized around how you actually work - finding, searching, navigating, editing. Key mappings follow consistent patterns that scale with complexity.
+
+**Manual Tool Mastery**: External tools (formatters, linters) remain external and are used intentionally. This builds transferable skills and deep understanding rather than editor dependencies.
+
+**Exceptions**: Only one language gets special treatment - Lisp. Vim's text objects and structural editing work so naturally with Lisp's uniform syntax that specialized tools like paredit aren't luxuries, they're baseline usability.
+
+## Plugin list
+
+See [selection criteria](###Plugin-selection-criteria) for why these specific plugins are acceptable.
+
+**Modern Necessities** (what vimscript can't handle well):
+
+- **nvim-lspconfig**: Language server integration
+- **nvim-treesitter + textobjects**: Enhanced syntax and structural navigation
+
+**Editing** (amplify core Vim strengths):
+
+- **vim-surround**: Text object manipulation
+- **vim-repeat**: Quality of life addition
+- **vim-vinegar**: Enhanced netrw
+
+**Development Integration** (essential workflow tools):
+
+- **vim-fugitive**: Git integration
+
+**Lisp Exception** (structural editing for uniform syntax):
+
+- **vim-sexp**: Paredit-style editing for s-expressions
+
+### Plugin selection criteria
+
+We include a plugin if it:
+
+- ✅ Makes you a better developer - teaches better thinking about code, tools, or workflow
+- ✅ Provides capabilities Vim fundamentally cannot - LSP protocol, syntax tree parsing, etc.
+- ✅ Enhances Vim's philosophy - extends operators, text objects, or native patterns
+- ✅ Reinforces good practices from the programming domain
+- ✅ Has educational value - helps you understand tools or concepts more deeply
+
+We exclude a plugin if it:
+
+- ❌ Hides complexity you should understand - automation that prevents learning
+- ❌ Replaces learning with convenience - shortcuts that bypass skill development
+- ❌ Creates dependencies on specific abstractions - non-transferable workflows
+- ❌ Violates Vim patterns - replaces rather than enhances native functionality
+- ❌ Provides convenience over capability - nice-to-have rather than essential
+
+#### Examples of excluded plugins
+
+- **Fuzzy finders**: :find \*\*/\* is sufficient
+- **Auto-formatters**: :!black % teaches you more
+- **Visual git tools**: command-line git + fugitive forces you to grok git
+- **Comment automation**: manual commenting teaches language syntax
+- **Session managers**: :mksession covers 80% of use cases
+
+## Supported Languages
+
+Each language includes appropriate tooling based on ecosystem maturity:
+
+- **Bash** - LSP (bashls), treesitter, formatter (shfmt)
+- **Haskell** - LSP (hls), treesitter, formatter (fourmolu)
+- **Java** - LSP (jdtls), treesitter, formatter (google-java-format)
+- **Common Lisp** - treesitter, structural editing
+- **Markdown** - treesitter, formatter (prettier)
+- **Nix** - LSP (nixd), treesitter, formatter (nixpkgs-fmt)
+- **LaTeX** - LSP (texlab), treesitter
+- **Lua** - formatter (stylua)
+- **Python** - LSP (pyright), treesitter, formatter (black)
 
 ## Key Bindings
 
@@ -182,17 +200,6 @@ K                " Hover documentation
 / and ?          " Enhanced search (very magic mode)
 ```
 
-### Git Integration
-
-```vim
-<leader>gb       " Toggle git blame
-<leader>gp       " Preview hunk
-<leader>gr       " Reset hunk
-<leader>gs       " Stage hunk
-<leader>gu       " Undo stage hunk
-[h / ]h          " Previous/next hunk
-```
-
 ### Treesitter Text Objects
 
 ```vim
@@ -249,31 +256,6 @@ ya(              " Yank around s-expression
 ci(              " Change inside s-expression
 ```
 
-## Development Workflow
-
-### Vim Workflow
-
-1. **Find files**: `<leader>ff` then type partial name, use Tab completion
-2. **Project search**: `<leader>fw` for grep-based search across project
-3. **Navigate results**: Use quickfix list with `]q`/`[q` to jump between matches
-4. **Buffer management**: `<leader>fb` to switch, `[b`/`]b` to cycle
-5. **Code navigation**: Use LSP when available (`gd`, `gr`), fall back to vim's tag system
-6. **REPL development**: `:terminal sbcl` for direct REPL interaction
-
-### Nix Development Cycle
-
-1. **Edit**: Use `<leader>ef` to quickly access flake.nix
-2. **Test**: `<leader>nr` to run your current flake
-3. **Build**: `<leader>nb` to build specific outputs
-4. **Develop**: `<leader>ns` to enter development environment
-5. **Update**: `<leader>nu` when dependencies need updating
-6. **Check**: `<leader>nc` to validate your flake
-
-**In .nix files**: Use local leader mappings for quick iteration:
-
-- `<localleader>r` to test changes immediately
-- `<localleader>c` to check syntax and structure
-
 ## Customization
 
 ### Adding a New Language
@@ -299,7 +281,7 @@ The configuration automatically:
 - Includes the LSP server in the build
 - Generates setup code
 - Adds the treesitter parser
-- Configures formatting
+- Adds the formatter to your environment
 
 ### Adding Key Bindings
 

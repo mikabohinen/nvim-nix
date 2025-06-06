@@ -138,7 +138,7 @@ let
 
   # Essential plugins only
   plugins = with pkgs.vimPlugins; [
-    # LSP (modern necessity)
+    # LSP integration
     nvim-lspconfig
 
     # Enhanced syntax highlighting with text objects
@@ -148,30 +148,17 @@ let
     nvim-treesitter-textobjects
 
     # Essential editing
-    nvim-autopairs
     vim-surround
     vim-vinegar
     vim-repeat
-    comment-nvim
 
     # Git integration
-    gitsigns-nvim
     vim-fugitive
 
     # Lisp exception: Vim's text objects and structural editing work so naturally
     # with Lisp's uniform syntax that specialized tools like paredit aren't luxuries
     # - they're baseline usability. Every other language gets LSP + Treesitter.
     vim-sexp
-    vim-sexp-mappings-for-regular-people
-
-    # Formatting
-    conform-nvim
-
-    # Colorscheme
-    nightfox-nvim
-
-    # Learning aid
-    which-key-nvim
   ];
 
   neovimConfig = pkgs.writeText "init.lua" ''
@@ -250,145 +237,6 @@ let
         },
       },
     })
-
-    -- Which-key setup (proper Lua configuration for learning aid)
-    local wk = require("which-key")
-    wk.setup({
-      preset = "modern",
-      delay = 300,
-      expand = 1,
-      notify = true,
-      win = {
-        border = "rounded",
-        padding = { 1, 2 },
-      },
-    })
-
-    -- Register which-key mappings
-    wk.add({
-      -- Leader key groups
-      { "<leader>f", group = "Find" },
-      { "<leader>b", group = "Buffer" },
-      { "<leader>w", group = "Window" },
-      { "<leader>g", group = "Git" },
-      { "<leader>c", group = "Code" },
-      { "<leader>r", group = "Refactor" },
-
-      -- File operations (vim native)
-      { "<leader><leader>", desc = "Find files (:find */*)" },
-      { "<leader>ff", desc = "Find files (:find */*)" },
-      { "<leader>fF", desc = "Find files (:find **/*)" },
-      { "<leader>fb", desc = "Find buffer (:buffer *)" },
-      { "<leader>fB", desc = "Find buffer and split (:sbuffer *)" },
-
-      -- Search operations
-      { "<leader>fw", desc = "Search in project (:grep \"\" .)" },
-      { "<leader>fW", desc = "Search in project (:vimgrep // **/*)" },
-      { "<leader>fs", desc = "Search in project (:lgrep \"\" .)" },
-      { "<leader>fS", desc = "Search in project (:lvimgrep // **/*)" },
-
-      -- Buffer operations
-      { "<leader>fb", desc = "Find and open buffer (:buffer)" },
-      { "<leader>fB", desc = "Find and split buffer (:sbuffer)" },
-      { "[b", desc = "Previous buffer" },
-      { "]b", desc = "Next buffer" },
-      { "<leader>bd", desc = "Delete buffer" },
-
-      -- Quickfix navigation
-      { "<leader>q", desc = "Open quickfix" },
-      { "<leader>Q", desc = "Close quickfix" },
-      { "<leader>l", desc = "Open location list" },
-      { "<leader>L", desc = "Close location list" },
-      { "]q", desc = "Next quickfix" },
-      { "[q", desc = "Previous quickfix" },
-      { "]l", desc = "Next location" },
-      { "[l", desc = "Previous location" },
-
-      -- Git operations
-      { "<leader>gb", desc = "Toggle git blame" },
-      { "<leader>gp", desc = "Preview hunk" },
-      { "<leader>gr", desc = "Reset hunk" },
-      { "<leader>gs", desc = "Stage hunk" },
-      { "<leader>gu", desc = "Undo stage hunk" },
-
-      -- Code operations (LSP when available)
-      { "<leader>cf", desc = "Format buffer" },
-      { "<leader>ca", desc = "Code actions" },
-      { "<leader>rn", desc = "Rename symbol" },
-
-      -- Text objects (treesitter)
-      { "af", desc = "Around function" },
-      { "if", desc = "Inside function" },
-      { "ac", desc = "Around class" },
-      { "ic", desc = "Inside class" },
-      { "]f", desc = "Next function" },
-      { "[f", desc = "Previous function" },
-    })
-
-    -- Formatting with conform (external tool integration)
-    local conform = require("conform")
-    local formatters_by_ft = {
-      ["*"] = { "trim_whitespace" }
-    }
-
-    ${builtins.concatStringsSep "\n    " (
-      builtins.map
-        (name: let lang = supportedLanguages.${name}; in
-          if builtins.hasAttr "formatter" lang then
-            ''formatters_by_ft["${name}"] = { "${lang.formatter.name}" }''
-          else ""
-        )
-        (builtins.attrNames supportedLanguages)
-    )}
-
-    conform.setup({
-      formatters_by_ft = formatters_by_ft,
-      format_on_save = { timeout_ms = 500, lsp_fallback = true },
-    })
-
-    -- Manual formatting keybinding
-    vim.keymap.set("n", "<leader>cf", function()
-      conform.format({ async = true, lsp_fallback = true })
-    end, { desc = "Format buffer" })
-
-    -- Essential editing enhancements
-    require('nvim-autopairs').setup({
-      disable_filetype = { "vim" },
-      enable_check_bracket_line = false, -- Better for Lisp
-    })
-
-    -- Git integration with enhanced mappings
-    require('gitsigns').setup({
-      signs = {
-        add = { text = '│' },
-        change = { text = '│' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-      current_line_blame = false,
-      on_attach = function(bufnr)
-        local gs = package.loaded.gitsigns
-
-        local function map(mode, l, r, opts)
-          opts = opts or {}
-          opts.buffer = bufnr
-          vim.keymap.set(mode, l, r, opts)
-        end
-
-        -- Git hunk navigation and operations
-        map('n', '<leader>gb', gs.toggle_current_line_blame, { desc = 'Toggle git blame' })
-        map('n', '<leader>gp', gs.preview_hunk, { desc = 'Preview hunk' })
-        map('n', '<leader>gr', gs.reset_hunk, { desc = 'Reset hunk' })
-        map('n', '<leader>gs', gs.stage_hunk, { desc = 'Stage hunk' })
-        map('n', '<leader>gu', gs.undo_stage_hunk, { desc = 'Undo stage hunk' })
-        map('n', '[h', gs.prev_hunk, { desc = 'Previous hunk' })
-        map('n', ']h', gs.next_hunk, { desc = 'Next hunk' })
-      end
-    })
-
-    -- Colorscheme
-    vim.cmd 'colorscheme nightfox'
   '';
 
   # The final Neovim package

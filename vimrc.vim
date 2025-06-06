@@ -20,6 +20,7 @@ set smarttab
 " Command line and completion
 set history=1000
 set wildmenu
+set wildoptions=pum,tagfile
 set wildmode=list:longest,full
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.DS_Store,*.db
 set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
@@ -40,6 +41,9 @@ set laststatus=2
 " Session management
 set sessionoptions-=options
 set viewoptions-=options
+
+" Colorscheme
+colorscheme habamax
 
 " =============================================================================
 " SEARCH AND NAVIGATION
@@ -215,7 +219,7 @@ augroup vimrc
   autocmd FileType qf nnoremap <buffer> <CR> <CR>:cclose<CR>
 
   " Language-specific settings
-  autocmd FileType lisp,scheme,clojure setlocal lisp
+  autocmd FileType lisp,scheme,clojure setlocal lisp shiftwidth=2
   autocmd FileType python setlocal expandtab shiftwidth=4 softtabstop=4
   autocmd FileType html,css,javascript,typescript,json,nix setlocal shiftwidth=2
 
@@ -235,6 +239,11 @@ augroup nix_mappings
   " Global nix development mappings
   autocmd FileType nix nnoremap <buffer> <leader>ef :EditFlake<CR>
   autocmd FileType nix nnoremap <buffer> <leader>ed :EditDefault<CR>
+augroup END
+
+augroup LispAutoPair
+  autocmd!
+  autocmd FileType lisp,scheme,clojure inoremap <buffer> ( ()<Left>
 augroup END
 
 " =============================================================================
