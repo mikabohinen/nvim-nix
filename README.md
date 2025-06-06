@@ -73,7 +73,7 @@ exclusion is intentional.
 
 ## Plugin list
 
-See [selection criteria](###Plugin-selection-criteria) for why these specific plugins are acceptable.
+See [selection criteria](#Plugin-selection-criteria) for why these specific plugins are acceptable.
 
 **Modern Necessities** (what vimscript can't handle well):
 
