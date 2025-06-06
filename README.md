@@ -114,7 +114,7 @@ We exclude a plugin if it:
 
 #### Examples of excluded plugins
 
-- **Fuzzy finders**: :find \*\*/\* is sufficient
+- **Fuzzy finders**: :find \*\*/\* is sufficient, and using :grep together with the quickfix list is better
 - **Auto-formatters**: :!black % teaches you more
 - **Visual git tools**: command-line git + fugitive forces you to grok git
 - **Comment automation**: manual commenting teaches language syntax

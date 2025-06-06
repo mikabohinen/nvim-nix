@@ -20,8 +20,8 @@ set smarttab
 " Command line and completion
 set history=1000
 set wildmenu
-set wildoptions=pum,tagfile
-set wildmode=list:longest,full
+set wildoptions=tagfile
+set wildmode=longest:longest,full
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.DS_Store,*.db
 set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
 
