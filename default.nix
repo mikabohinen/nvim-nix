@@ -1,7 +1,6 @@
 { pkgs, ... }:
 
 let
-  # Create SBCL with SWANK and other useful packages
   sbclWithPackages = pkgs.sbcl.withPackages (ps: with ps; [
     swank # SWANK server for REPL integration
     alexandria # Utility library
@@ -73,8 +72,6 @@ let
         name = "nixpkgs_fmt";
         package = pkgs.nixpkgs-fmt;
       };
-      tools = [ pkgs.nix-output-monitor pkgs.nix-tree ];
-      description = "Nix expression language";
     };
     latex = {
       lsp = {
@@ -137,36 +134,41 @@ let
       (builtins.attrNames supportedLanguages)
   );
 
-  # Read the separate .vimrc file
   vimrcConfig = pkgs.writeText "vimrc" (builtins.readFile ./vimrc.vim);
 
-  # Essential plugins only - following expert minimalism but keeping Lua necessities
+  # Essential plugins only
   plugins = with pkgs.vimPlugins; [
     # LSP (modern necessity)
     nvim-lspconfig
 
-    # Enhanced syntax highlighting with text objects (Lua-only features)
+    # Enhanced syntax highlighting with text objects
     (nvim-treesitter.withPlugins (p:
       builtins.map (name: p.${name}) treesitterParsers
     ))
-    nvim-treesitter-textobjects # Essential for advanced text manipulation
+    nvim-treesitter-textobjects
 
-    # Essential editing (Tim Pope level quality)
+    # Essential editing
     nvim-autopairs
     vim-surround
     vim-vinegar
+    vim-repeat
+    comment-nvim
 
-    # Git integration (genuinely valuable)
+    # Git integration
     gitsigns-nvim
     vim-fugitive
 
-    # Specialized language support
-    cornelis # Agda
-    conjure # Common Lisp REPL
-    vim-sexp # Lisp structural editing
-    vim-sexp-mappings-for-regular-people # Simplified sexp mappings
+    # Lisp's homoiconicity means that data is code and code is data, hence text
+    # is data. Now, Vim is fundamentally meant to edit structured data/text and
+    # since Lisp code is fundamentally just data which again is just text, it
+    # is appropriate to include domain specific tooling for Lisp as it extends
+    # the core Vim philosophy. Lisp is the only language we make this exception
+    # for. All other languages will rely on the general approach of LSP + Treesitter.
+    conjure
+    vim-sexp
+    vim-sexp-mappings-for-regular-people
 
-    # Formatting (external tool integration)
+    # Formatting
     conform-nvim
 
     # Colorscheme
@@ -176,9 +178,8 @@ let
     which-key-nvim
   ];
 
-  # Streamlined Neovim configuration - expert level with essential Lua features
   neovimConfig = pkgs.writeText "init.lua" ''
-    -- Source the .vimrc first (vim philosophy foundation)
+    -- Source the vimrc first
     vim.cmd.source('${vimrcConfig}')
 
     -- Essential Lua configuration - only what vimscript can't handle well
@@ -390,30 +391,6 @@ let
 
     -- Colorscheme
     vim.cmd 'colorscheme nightfox'
-
-    -- Agda configuration
-    vim.g.cornelis_agda_prefix = "<C-g>"
-    vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
-      pattern = "*.agda",
-      callback = function()
-        local agda_maps = {
-          {"<leader>l", ":CornelisLoad<CR>", "Load Agda file"},
-          {"<leader>r", ":CornelisRefine<CR>", "Refine goal"},
-          {"<leader>,", ":CornelisTypeContext<CR>", "Type context"},
-          {"gd", ":CornelisGoToDefinition<CR>", "Go to definition"},
-          {"[/", ":CornelisPrevGoal<CR>", "Previous goal"},
-          {"]/", ":CornelisNextGoal<CR>", "Next goal"},
-        }
-
-        local agda_mappings = {}
-        for _, map in ipairs(agda_maps) do
-          vim.keymap.set("n", map[1], map[2], { buffer = true, desc = map[3] })
-          table.insert(agda_mappings, { map[1], desc = map[3], buffer = true })
-        end
-
-        wk.add(agda_mappings)
-      end
-    })
 
     -- Common Lisp configuration
     vim.g['conjure#client#common_lisp#swank#connection#default_port'] = "4005"

@@ -43,7 +43,7 @@ Following expert minimalism principles, only essential plugins are included:
 - **LSP & Language Support**: nvim-lspconfig, nvim-treesitter, nvim-treesitter-textobjects
 - **Expert Editing**: vim-surround, nvim-autopairs, vim-vinegar
 - **Git Integration**: gitsigns-nvim, vim-fugitive
-- **Specialized Language Support**: cornelis (Agda), conjure (Lisp REPL), vim-sexp
+- **Specialized Language Support**: conjure (Lisp REPL), vim-sexp
 - **Tool Integration**: conform-nvim (formatting), which-key-nvim (learning aid)
 - **Aesthetics**: nightfox-nvim colorscheme
 
@@ -295,26 +295,6 @@ endfunction
 - `default.nix` - Main Neovim configuration and package definition
 - `flake.nix` - Nix flake with inputs and outputs
 - `vimrc.vim` - Core vim configuration following traditional patterns
-
-## Contributing
-
-This configuration follows these principles:
-
-1. **Vim-first**: Traditional vim patterns and commands are preferred
-2. **Minimal dependencies**: Only essential plugins that provide significant value
-3. **Reproducible**: Everything defined declaratively in Nix
-4. **Expert-friendly**: Optimized for efficiency and muscle memory
-5. **Language-agnostic**: Consistent patterns across all supported languages
-6. **Vimscript for commands**: Use vimscript for shell integration and commands, Lua only for features requiring it
-
-When contributing:
-
-- Prefer native vim solutions over plugin dependencies
-- Use vimscript for custom commands and shell integration
-- Reserve Lua for LSP, treesitter, and plugin configuration that requires it
-- Ensure all changes are reproducible across systems
-- Follow the existing patterns for language support
-- Document any new key bindings or features
 
 ## License
 

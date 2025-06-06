@@ -66,10 +66,6 @@ nnoremap N Nzzzv
 nnoremap * *zzzv
 nnoremap # #zzzv
 
-" Enhanced text movement
-nnoremap j gj
-nnoremap k gk
-
 " =============================================================================
 " LEADER MAPPINGS
 " =============================================================================
@@ -77,9 +73,10 @@ nnoremap k gk
 let mapleader = " "
 let maplocalleader = ","
 
-" File operations (vim native)
-nnoremap <leader>f :find *
-nnoremap <leader>F :find **/*
+" File operations
+nnoremap <leader><leader> :find *
+nnoremap <leader>ff :find *
+nnoremap <leader>fF :find **/*
 
 " Buffer management
 nnoremap <leader>b :buffer *
@@ -218,7 +215,7 @@ augroup vimrc
   " Language-specific settings
   autocmd FileType lisp,scheme,clojure setlocal lisp
   autocmd FileType python setlocal expandtab shiftwidth=4 softtabstop=4
-  autocmd FileType html,css,javascript,typescript,json setlocal shiftwidth=2
+  autocmd FileType html,css,javascript,typescript,json,nix setlocal shiftwidth=2
 
 augroup END
 
@@ -237,21 +234,6 @@ augroup nix_mappings
   autocmd FileType nix nnoremap <buffer> <leader>ef :EditFlake<CR>
   autocmd FileType nix nnoremap <buffer> <leader>ed :EditDefault<CR>
 augroup END
-
-" =============================================================================
-" MISCELLANEOUS
-" =============================================================================
-
-" Enhanced status line
-set statusline=%f\ %h%w%m%r\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
-
-" UTF-8 encoding
-if &encoding ==# 'latin1' && has('gui_running')
-  set encoding=utf-8
-endif
-
-" Load matchit for better % matching
-packadd! matchit
 
 " =============================================================================
 " NIX INTEGRATION COMMANDS
@@ -418,6 +400,21 @@ endfunction
 " Quick file editing commands
 command! EditFlake edit flake.nix
 command! EditDefault edit default.nix
+
+" =============================================================================
+" MISCELLANEOUS
+" =============================================================================
+
+" Enhanced status line
+set statusline=%f\ %h%w%m%r\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
+
+" UTF-8 encoding
+if &encoding ==# 'latin1' && has('gui_running')
+  set encoding=utf-8
+endif
+
+" Load matchit for better % matching
+packadd! matchit
 
 " =============================================================================
 " END OF CONFIGURATION
