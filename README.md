@@ -301,15 +301,6 @@ The configuration automatically:
 - Adds the treesitter parser
 - Configures formatting
 
-### Philosophy-Driven Customization
-
-**Before adding anything**, ask:
-
-1. **Does this replace or enhance core Vim?** (Enhance is good, replace is bad)
-2. **Is this essential for effectiveness?** (Convenience isn't enough)
-3. **Does this follow existing patterns?** (Consistency enables mastery)
-4. **Would a vim expert reach for this?** (Power users prefer fewer, more powerful tools)
-
 ### Adding Key Bindings
 
 Follow the established patterns:
