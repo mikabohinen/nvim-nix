@@ -282,9 +282,9 @@ let
       { "<leader>fB", desc = "Find buffer and split (:sbuffer *)" },
 
       -- Search operations
-      { "<leader>fw", desc = "Search in project (:grep \"\" .")" },
+      { "<leader>fw", desc = "Search in project (:grep \"\" .)" },
       { "<leader>fW", desc = "Search in project (:vimgrep // **/*)" },
-      { "<leader>fs", desc = "Search in project (:lgrep \"\" .")" },
+      { "<leader>fs", desc = "Search in project (:lgrep \"\" .)" },
       { "<leader>fS", desc = "Search in project (:lvimgrep // **/*)" },
 
       -- Buffer operations
