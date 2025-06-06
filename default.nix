@@ -158,13 +158,9 @@ let
     gitsigns-nvim
     vim-fugitive
 
-    # Lisp's homoiconicity means that data is code and code is data, hence text
-    # is data. Now, Vim is fundamentally meant to edit structured data/text and
-    # since Lisp code is fundamentally just data which again is just text, it
-    # is appropriate to include domain specific tooling for Lisp as it extends
-    # the core Vim philosophy. Lisp is the only language we make this exception
-    # for. All other languages will rely on the general approach of LSP + Treesitter.
-    conjure
+    # Lisp exception: Vim's text objects and structural editing work so naturally
+    # with Lisp's uniform syntax that specialized tools like paredit aren't luxuries
+    # - they're baseline usability. Every other language gets LSP + Treesitter.
     vim-sexp
     vim-sexp-mappings-for-regular-people
 
@@ -272,7 +268,6 @@ let
     wk.add({
       -- Leader key groups
       { "<leader>f", group = "Find" },
-      { "<leader>s", group = "Search" },
       { "<leader>b", group = "Buffer" },
       { "<leader>w", group = "Window" },
       { "<leader>g", group = "Git" },
@@ -280,19 +275,24 @@ let
       { "<leader>r", group = "Refactor" },
 
       -- File operations (vim native)
-      { "<leader>f", desc = "Find files (:find **/*)" },
-      { "<leader>F", desc = "Find files recursive" },
+      { "<leader><leader>", desc = "Find files (:find */*)" },
+      { "<leader>ff", desc = "Find files (:find */*)" },
+      { "<leader>fF", desc = "Find files (:find **/*)" },
+      { "<leader>fb", desc = "Find buffer (:buffer * },
+      { "<leader>fB", desc = "Find buffer and split (:sbuffer * },
 
       -- Search operations
-      { "<leader>s", desc = "Search in project (:vimgrep)" },
-      { "<leader>S", desc = "System grep" },
+      { "<leader>fw", desc = "Search in project (:grep \"\" .")" },
+      { "<leader>fW", desc = "Search in project (:vimgrep // **/*)" },
+      { "<leader>fs", desc = "Search in project (:lgrep \"\" .")" },
+      { "<leader>fS", desc = "Search in project (:lvimgrep // **/*)" },
 
       -- Buffer operations
-      { "<leader>b", desc = "Switch buffer (:buffer)" },
-      { "<leader>B", desc = "Switch buffer split" },
+      { "<leader>fb", desc = "Find and open buffer (:buffer)" },
+      { "<leader>fB", desc = "Find and split buffer (:sbuffer)" },
       { "[b", desc = "Previous buffer" },
       { "]b", desc = "Next buffer" },
-      { "<leader>d", desc = "Delete buffer" },
+      { "<leader>bd", desc = "Delete buffer" },
 
       -- Quickfix navigation
       { "<leader>q", desc = "Open quickfix" },
@@ -301,6 +301,8 @@ let
       { "<leader>L", desc = "Close location list" },
       { "]q", desc = "Next quickfix" },
       { "[q", desc = "Previous quickfix" },
+      { "]l", desc = "Next location" },
+      { "[l", desc = "Previous location" },
 
       -- Git operations
       { "<leader>gb", desc = "Toggle git blame" },
@@ -321,10 +323,6 @@ let
       { "ic", desc = "Inside class" },
       { "]f", desc = "Next function" },
       { "[f", desc = "Previous function" },
-
-      -- Clipboard operations
-      { "<leader>y", desc = "Copy to system clipboard" },
-      { "<leader>p", desc = "Paste from system clipboard" },
     })
 
     -- Formatting with conform (external tool integration)
@@ -391,36 +389,6 @@ let
 
     -- Colorscheme
     vim.cmd 'colorscheme nightfox'
-
-    -- Common Lisp configuration
-    vim.g['conjure#client#common_lisp#swank#connection#default_port'] = "4005"
-    vim.g['conjure#log#hud#enabled'] = false
-
-    vim.api.nvim_create_autocmd("FileType", {
-      pattern = {"lisp", "commonlisp"},
-      callback = function()
-        vim.opt_local.lisp = true
-        local opts = { buffer = true, silent = true }
-
-        -- Conjure mappings
-        vim.keymap.set('n', '<localleader>ee', '<cmd>ConjureEval<cr>', vim.tbl_extend('force', opts, { desc = 'Eval form' }))
-        vim.keymap.set('n', '<localleader>cf', '<cmd>ConjureConnect<cr>', vim.tbl_extend('force', opts, { desc = 'Connect SWANK' }))
-
-        -- Register with which-key
-        wk.add({
-          { "<localleader>e", group = "Evaluate", buffer = true },
-          { "<localleader>c", group = "Connect", buffer = true },
-          { "<localleader>ee", desc = "Eval form", buffer = true },
-          { "<localleader>cf", desc = "Connect SWANK", buffer = true },
-        })
-      end,
-    })
-
-    -- Helper commands
-    vim.api.nvim_create_user_command('SwankStart', function()
-      vim.fn.system('sbcl --eval "(asdf:load-system \'swank)" --eval "(swank:create-server :port 4005 :dont-close t)" &')
-      print("SWANK server starting on port 4005...")
-    end, { desc = 'Start SWANK server' })
   '';
 
   # The final Neovim package

@@ -79,15 +79,17 @@ nnoremap <leader>ff :find *
 nnoremap <leader>fF :find **/*
 
 " Buffer management
-nnoremap <leader>b :buffer *
-nnoremap <leader>B :sbuffer *
+nnoremap <leader>fb :buffer *
+nnoremap <leader>fB :sbuffer *
 nnoremap [b :bprevious<CR>
 nnoremap ]b :bnext<CR>
-nnoremap <leader>d :bdelete<CR>
+nnoremap <leader>bd :bdelete<CR>
 
 " Search operations
-nnoremap <leader>s :grep "" .<Left><Left><Left>
-nnoremap <leader>S :vimgrep // **/*<Left><Left><Left><Left><Left><Left>
+nnoremap <leader>fw :grep "" .<Left><Left><Left>
+nnoremap <leader>fW :vimgrep // **/*<Left><Left><Left><Left><Left><Left>
+nnoremap <leader>fs :lgrep "" .<Left><Left><Left>
+nnoremap <leader>fS :lvimgrep // **/*<Left><Left><Left><Left><Left><Left>
 
 " Quickfix and location lists
 nnoremap <leader>q :copen<CR>
