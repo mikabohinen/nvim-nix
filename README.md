@@ -58,6 +58,7 @@ Only essential plugins are included:
 **Editing** (amplify core Vim strengths):
 
 - **vim-surround**: Text object manipulation
+- **vim-repeat**: Quality of life addition
 - **nvim-autopairs**: Intelligent bracket pairing
 - **vim-vinegar**: Enhanced netrw
 - **comment-nvim**: Structured commenting

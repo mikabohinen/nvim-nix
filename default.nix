@@ -278,8 +278,8 @@ let
       { "<leader><leader>", desc = "Find files (:find */*)" },
       { "<leader>ff", desc = "Find files (:find */*)" },
       { "<leader>fF", desc = "Find files (:find **/*)" },
-      { "<leader>fb", desc = "Find buffer (:buffer * },
-      { "<leader>fB", desc = "Find buffer and split (:sbuffer * },
+      { "<leader>fb", desc = "Find buffer (:buffer *)" },
+      { "<leader>fB", desc = "Find buffer and split (:sbuffer *)" },
 
       -- Search operations
       { "<leader>fw", desc = "Search in project (:grep \"\" .")" },
