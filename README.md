@@ -6,8 +6,7 @@ minimalist vim philosophy with essential modern enhancements.
 ## Philosophy
 
 This configuration follows a minimalist approach. It embodies the belief that
-power comes from mastery of core tools, not accumulation of features. Every
-inclusion is deliberate, every exclusion intentional.
+power comes from mastery of core tools, not accumulation of features.
 
 ### Core Principles
 
@@ -26,7 +25,6 @@ inclusion is deliberate, every exclusion intentional.
 - 🔌 **Extensible**: Easy to add new languages and plugins
 - 🚀 **Batteries included**: Pre-configured for multiple languages
 - 📦 **Declarative**: Configuration defined entirely in Nix
-- 🎯 **Expert-level**: Pure vim foundation with essential Lua enhancements
 - 🔧 **Nix Integration**: Built-in commands for Nix development workflow
 
 ## Supported Languages
