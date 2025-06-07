@@ -39,6 +39,25 @@ let
     -- Source the vimrc first
     vim.cmd.source('${vimrcConfig}')
 
+
+    -- Configure diagnostics display
+    vim.diagnostic.config({
+      virtual_text = {
+        prefix = '●',
+        spacing = 4,
+      },
+      signs = true,
+      underline = true,
+      update_in_insert = false,
+      severity_sort = true,
+      float = {
+        border = 'rounded',
+        source = 'always',
+        header = ''',
+        prefix = ''',
+      },
+    })
+
     -- LSP setup
     local lspconfig = require('lspconfig')
     ${generateLspSetup supportedLanguages}
@@ -47,12 +66,43 @@ let
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(event)
         local opts = { buffer = event.buf, silent = true }
+        local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+        -- Core LSP navigation
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
         vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+        vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+        vim.keymap.set('n', '<leader>ck', vim.lsp.buf.signature_help, opts)
+
+        -- Code actions
         vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+        vim.keymap.set('v', '<leader>ca', vim.lsp.buf.code_action, opts)
+        vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename, opts)
+
+        -- Diagnostic navigation (buffer-local)
+        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
+        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
+        vim.keymap.set('n', ']D', function()
+          vim.diagnostic.goto_next({ severity = vim.diagnostic.severity.ERROR })
+        end, opts)
+        vim.keymap.set('n', '[D', function()
+          vim.diagnostic.goto_prev({ severity = vim.diagnostic.severity.ERROR })
+        end, opts)
+
+        -- Diagnostic display (buffer-local)
+        vim.keymap.set('n', '<leader>cd', vim.diagnostic.open_float, opts)
+        vim.keymap.set('n', '<leader>cD', vim.diagnostic.setloclist, opts)
+        vim.keymap.set('n', '<leader>cw', vim.diagnostic.setqflist, opts)
+
+        -- Workspace management (LSP-specific)
+        vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+        vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+        vim.keymap.set('n', '<leader>wl', function()
+          print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+        end, opts)
       end,
     })
 

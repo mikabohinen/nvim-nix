@@ -109,9 +109,6 @@ nnoremap [q :cprevious<CR>
 nnoremap ]l :lnext<CR>
 nnoremap [l :lprevious<CR>
 
-" Quick toggle
-nnoremap <silent> <leader>c :call ToggleQuickFix()<CR>
-
 " Global nix mappings under <leader>n
 nnoremap <leader>nr :NixRun
 nnoremap <leader>nb :NixBuild
@@ -126,6 +123,14 @@ nnoremap <leader>nC :NixClean<CR>
 " Quick file access
 nnoremap <leader>ef :EditFlake<CR>
 nnoremap <leader>ed :EditDefault<CR>
+
+" LSP and diagnostics mapping (inlcuded here because we define commands in
+" this file and not default.nix
+nnoremap <leader>cq :DiagnosticsQF<CR>
+nnoremap <leader>cl :DiagnosticsLoc<CR>
+nnoremap <leader>cs :call <SID>ShowDiagnosticSummary()<CR>
+nnoremap <leader>cR :LspRestart<CR>
+nnoremap <leader>cI :LspInfo<CR>
 
 " =============================================================================
 " FILE MANAGEMENT
@@ -178,6 +183,19 @@ command! ReloadVimrc source ~/src/nvim-nix/vimrc.vim
 command! StripWhitespace call StripTrailingWhitespace()
 command! -nargs=? -complete=help H vertical help <args>
 
+
+" Diagnostic commands
+command! DiagnosticsQF lua vim.diagnostic.setqflist({open = true})
+command! DiagnosticsLoc lua vim.diagnostic.setloclist({open = true})
+command! DiagnosticsAll lua vim.diagnostic.setqflist({open = true, title = 'All Project Diagnostics'})
+command! DiagnosticsErrors lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.ERROR, open = true, title = 'Project Errors'})
+command! DiagnosticsWarnings lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.WARN, open = true, title = 'Project Warnings'})
+command! DiagnosticsToggleVirtualText lua vim.diagnostic.config({virtual_text = not vim.diagnostic.config().virtual_text})
+
+" LSP management commands
+command! LspRestart lua vim.lsp.stop_client(vim.lsp.get_active_clients()); edit
+command! LspInfo lua vim.cmd('LspInfo')
+
 " =============================================================================
 " FUNCTIONS
 " =============================================================================
@@ -196,6 +214,52 @@ function! StripTrailingWhitespace()
   call winrestview(l:save)
 endfunction
 
+function! LspDiagnosticCounts()
+  if !exists('*v:lua.vim.diagnostic.get')
+    return ''
+  endif
+  
+  let l:counts = v:lua.vim.diagnostic.get(0)
+  let l:errors = 0
+  let l:warnings = 0
+  let l:hints = 0
+  
+  for diagnostic in l:counts
+    if diagnostic.severity == 1  " Error
+      let l:errors += 1
+    elseif diagnostic.severity == 2  " Warning
+      let l:warnings += 1
+    elseif diagnostic.severity == 4  " Hint
+      let l:hints += 1
+    endif
+  endfor
+  
+  let l:result = ''
+  if l:errors > 0
+    let l:result .= ' E:' . l:errors
+  endif
+  if l:warnings > 0
+    let l:result .= ' W:' . l:warnings
+  endif
+  if l:hints > 0
+    let l:result .= ' H:' . l:hints
+  endif
+  
+  return l:result
+endfunction
+
+function! s:ShowDiagnosticSummary()
+  if !exists('*v:lua.vim.diagnostic.get')
+    echo "LSP diagnostics not available"
+    return
+  endif
+  
+  let l:errors = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.ERROR}))
+  let l:warnings = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.WARN}))
+  let l:hints = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.HINT}))
+  
+  echo printf("Diagnostics: %d errors, %d warnings, %d hints", l:errors, l:warnings, l:hints)
+endfunction
 
 " =============================================================================
 " AUTOCOMMANDS
@@ -421,7 +485,7 @@ command! EditDefault edit default.nix
 " =============================================================================
 
 " Enhanced status line
-set statusline=%f\ %h%w%m%r\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
+set statusline=%f\ %h%w%m%r%{LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
 
 " UTF-8 encoding
 if &encoding ==# 'latin1' && has('gui_running')
