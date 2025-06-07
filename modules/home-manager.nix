@@ -100,15 +100,22 @@ in {
           nvimPackage = cfg.package;
         });
 
-      desktopEntries =
-        if cfg.enableDesktopEntry
-        then desktop.makeDesktopEntries {
-          terminalEmulator = cfg.terminalEmulator;
-          availablePackages = config.home.packages;
-          nvimPackage = cfg.package;
-          createVariants = true;
-        }
-        else {};
+      selectedTerminal =
+        if cfg.terminalEmulator == "auto"
+        then desktop.detectTerminal config.home.packages
+        else cfg.terminalEmulator;
+
+      terminal = desktop.terminalEmulators.${selectedTerminal};
+      execCommand = "${terminal.command} ${cfg.package}/bin/nvim %F";
+
+      baseMimeTypes = [
+        "text/plain" "text/x-markdown" "text/markdown" "text/x-tex"
+        "text/x-chdr" "text/x-csrc" "text/x-c++hdr" "text/x-c++src"
+        "text/x-java" "text/x-python" "text/x-lua" "text/x-nix"
+        "text/x-haskell" "text/x-shellscript" "application/x-shellscript"
+        "text/x-lisp" "text/x-scheme" "application/json" "text/csv"
+        "text/x-yaml" "text/yaml" "application/x-yaml"
+      ];
     in {
       home.packages = basePackages ++ terminalPackage ++ guiWrapper;
 
@@ -125,7 +132,20 @@ in {
         text = cfg.extraConfig;
       };
 
-      xdg.desktopEntries = mkIf cfg.enableDesktopEntry desktopEntries;
+      xdg.desktopEntries = mkIf cfg.enableDesktopEntry {
+        nvim = {
+          name = "Neovim";
+          genericName = "Text Editor";
+          comment = "Edit text files with Neovim in ${terminal.name}";
+          exec = execCommand;
+          icon = "nvim";
+          terminal = false;
+          categories = [ "Utility" "TextEditor" "Development" "ConsoleOnly" ];
+          mimeType = baseMimeTypes ++ cfg.extraMimeTypes;
+          startupNotify = false;
+          keywords = [ "vim" "neovim" "editor" "text" "code" "development" ];
+        };
+      };
     }
   );
 }
