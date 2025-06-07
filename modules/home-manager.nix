@@ -1,14 +1,21 @@
 # modules/home-manager.nix
 # Home Manager module for nvim-nix
 
-{ nvimPackages }: { config, lib, pkgs, ... }:
+{ nixpkgs, overlay }: { config, lib, pkgs, ... }:
 
 with lib;
 let
   cfg = config.programs.nvimNix;
+
+  nvimPkgs = import nixpkgs {
+    inherit (pkgs) system;
+    overlays = [ overlay ];
+  };
+
+  nvimPackages = nvimPkgs.callPackage ../default.nix { pkgs = nvimPkgs; };
   inherit (nvimPackages) languageServers formatters extraTools;
 
-  desktop = import ../lib/desktop.nix { inherit pkgs lib; };
+  desktop = import ../lib/desktop.nix { pkgs = nvimPkgs; inherit lib; };
 in {
   options.programs.nvimNix = {
     enable = mkEnableOption "Enable minimal neovim distribution";
@@ -16,7 +23,7 @@ in {
     package = mkOption {
       type = types.package;
       default = nvimPackages.full;
-      defaultText = "nvim-nix full package";
+      defaultText = "nvim-nix full package with nightly neovim";
       description = "The neovim package to use";
     };
 
@@ -98,7 +105,6 @@ in {
           nvimPackage = cfg.package;
         });
 
-      # Create Home Manager compatible desktop entries
       selectedTerminal =
         if cfg.terminalEmulator == "auto"
         then desktop.detectTerminal config.home.packages
@@ -131,12 +137,11 @@ in {
         text = cfg.extraConfig;
       };
 
-      # Home Manager desktop entries (simplified structure)
       xdg.desktopEntries = mkIf cfg.enableDesktopEntry {
         nvim = {
-          name = "Neovim";
+          name = "Neovim Nightly";
           genericName = "Text Editor";
-          comment = "Edit text files with Neovim in ${terminal.name}";
+          comment = "Edit text files with Neovim Nightly in ${terminal.name}";
           exec = execCommand;
           icon = "nvim";
           terminal = false;

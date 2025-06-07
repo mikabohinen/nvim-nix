@@ -1,14 +1,21 @@
 # modules/nixos.nix
 # NixOS system module for nvim-nix
 
-{ nvimPackages }: { config, lib, pkgs, ... }:
+{ nixpkgs, overlay }: { config, lib, pkgs, ... }:
 
 with lib;
 let
   cfg = config.programs.nvimNix;
+
+  nvimPkgs = import nixpkgs {
+    inherit (pkgs) system;
+    overlays = [ overlay ];
+  };
+
+  nvimPackages = nvimPkgs.callPackage ../default.nix { pkgs = nvimPkgs; };
   inherit (nvimPackages) languageServers formatters extraTools;
 
-  desktop = import ../lib/desktop.nix { inherit pkgs lib; };
+  desktop = import ../lib/desktop.nix { pkgs = nvimPkgs; inherit lib; };
 in {
   options.programs.nvimNix = {
     enable = mkEnableOption "Enable minimal neovim distribution";
@@ -16,7 +23,7 @@ in {
     package = mkOption {
       type = types.package;
       default = nvimPackages.full;
-      defaultText = "nvim-nix full package";
+      defaultText = "nvim-nix full package with nightly neovim";
       description = "The neovim package to use";
     };
 
