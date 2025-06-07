@@ -11,7 +11,7 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
-    (flake-utils.lib.eachDefaultSystem
+    flake-utils.lib.eachDefaultSystem
       (system:
         let
           pkgs = import nixpkgs {
@@ -23,6 +23,9 @@
           utils = import ./lib/utils.nix { inherit pkgs lib; };
           lib = nixpkgs.lib;
 
+          homeManagerModule = import ./modules/home-manager.nix { inherit nvimPackages; };
+          nixosModule = import ./modules/nixos.nix { inherit nvimPackages; };
+
         in
         {
           packages = {
@@ -33,6 +36,7 @@
               name = "nvim-dev-tools";
               paths = nvimPackages.languageServers ++ nvimPackages.formatters ++ nvimPackages.extraTools;
             };
+            plugins = nvimPackages.pluginUtils;
           };
 
           apps = utils.makeApps nvimPackages;
@@ -42,12 +46,12 @@
             plugins = nvimPackages.pluginInfo.devShell;
           };
 
+          nixosModules.default = nixosModule;
+          homeManagerModules.default = homeManagerModule;
+
           lib.versionInfo = utils.getVersionInfo nvimPackages;
         }
-      )) // {
-      nixosModules.default = import ./modules/nixos.nix;
-      homeManagerModules.default = import ./modules/home-manager.nix;
-
+      ) // {
       overlays.default = final: prev: {
         nvim-nix = self.packages.${prev.system}.default;
       };

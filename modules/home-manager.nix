@@ -1,13 +1,11 @@
 # modules/home-manager.nix
 # Home Manager module for nvim-nix
 
-{ config, lib, pkgs, ... }:
+{ nvimPackages }: { config, lib, pkgs, ... }:
 
 with lib;
 let
   cfg = config.programs.nvimNix;
-
-  nvimPackages = pkgs.callPackage ../default.nix { inherit pkgs; };
   inherit (nvimPackages) languageServers formatters extraTools;
 
   desktop = import ../lib/desktop.nix { inherit pkgs lib; };
@@ -100,6 +98,7 @@ in {
           nvimPackage = cfg.package;
         });
 
+      # Create Home Manager compatible desktop entries
       selectedTerminal =
         if cfg.terminalEmulator == "auto"
         then desktop.detectTerminal config.home.packages
@@ -132,6 +131,7 @@ in {
         text = cfg.extraConfig;
       };
 
+      # Home Manager desktop entries (simplified structure)
       xdg.desktopEntries = mkIf cfg.enableDesktopEntry {
         nvim = {
           name = "Neovim";

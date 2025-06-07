@@ -1,13 +1,11 @@
 # modules/nixos.nix
 # NixOS system module for nvim-nix
 
-{ config, lib, pkgs, ... }:
+{ nvimPackages }: { config, lib, pkgs, ... }:
 
 with lib;
 let
   cfg = config.programs.nvimNix;
-
-  nvimPackages = pkgs.callPackage ../default.nix { inherit pkgs; };
   inherit (nvimPackages) languageServers formatters extraTools;
 
   desktop = import ../lib/desktop.nix { inherit pkgs lib; };
