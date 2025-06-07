@@ -8,50 +8,72 @@ minimalist vim philosophy with essential modern enhancements.
 - 🔄 **Reproducible**: Same setup on any machine with Nix
 - 🧩 **Modular**: Organized language support with LSP, formatters, and treesitter
 - 🔌 **Extensible**: Easy to add new languages and plugins
-- 🚀 **Batteries available**: Pre-configured for multiple languages with external tools
+- 🚀 **Batteries Available**: Pre-configured for multiple languages with external tools
 - 🔧 **Nix Integration**: Built-in commands for Nix development workflow
 - ⚡ **Minimal**: Only 8 essential plugins for maximum performance
+- 🏠 **Home Manager & NixOS**: First-class module support for both
+- 🛠️ **Multiple Variants**: Choose from minimal editor to full development environment
+- 🖥️ **Desktop Integration**: Seamless GUI integration with terminal emulator auto-detection
+- 🔒 **Pure Nix**: Declarative plugin management with cryptographic integrity
+
+## Quick Start
+
+```bash
+# Try it immediately (full development environment)
+nix run github:mikabohinen/nvim-nix#dev
+
+# Just the editor (minimal)
+nix run github:mikabohinen/nvim-nix#neovim
+
+# Development shell with all tools
+nix develop github:mikabohinen/nvim-nix
+```
 
 ## Installation
 
-### Prerequisites
+### Home Manager
 
-- [Nix package manager](https://nixos.org/download.html) with flakes enabled
-
-### As a standalone application
-
-```bash
-# Run directly
-nix run github:mikabohinen/nvim-nix
-
-# Install to your profile
-nix profile install github:mikabohinen/nvim-nix
-```
-
-### As a NixOS module
-
-Add to your `flake.nix`:
+Add to your `home.nix`:
 
 ```nix
 {
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nvim-nix.url = "github:mikabohinen/nvim-nix";
-  };
-  outputs = { self, nixpkgs, nvim-nix, ... }: {
-    nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
-      # ...
-      modules = [
-        # ...
-        nvim-nix.nixosModules.default
-        {
-          programs.mynvim.enable = true;
-        }
-      ];
-    };
+  inputs.nvim-nix.url = "github:mikabohinen/nvim-nix";
+
+  # In your home configuration:
+  imports = [ inputs.nvim-nix.homeManagerModules.default ];
+
+  programs.nvimNix = {
+    enable = true;
+    enableDevTools = true; # Install formatters, linters, etc.
   };
 }
 ```
+
+### NixOS System-wide
+
+Add to your `configuration.nix`:
+
+```nix
+{
+  inputs.nvim-nix.url = "github:mikabohinen/nvim-nix";
+
+  # In your system configuration:
+  imports = [ inputs.nvim-nix.nixosModules.default ];
+
+  programs.nvimNix = {
+    enable = true;
+    defaultEditor = true;
+    enableDevTools = true;
+  };
+}
+```
+
+### Package Variants
+
+- **`#neovim`**: Minimal editor with LSP support only
+- **`#default`**: Full editor with all development tools
+- **`#dev`**: App launcher with proper PATH for all tools
+- **`#dev-tools`**: Just the development tools (formatters, linters, etc.)
 
 ## Philosophy
 
@@ -69,9 +91,11 @@ exclusion is intentional.
 
 **Manual Tool Mastery**: External tools (formatters, linters) remain external and are used intentionally. This builds transferable skills and deep understanding rather than editor dependencies.
 
+**Absolute Control**: Plugin management through pure Nix expressions with cryptographic integrity. No hidden dependencies or external state.
+
 **Exceptions**: Only one language gets special treatment - Lisp. Vim's text objects and structural editing work so naturally with Lisp's uniform syntax that specialized tools like paredit aren't luxuries, they're baseline usability.
 
-## Plugin list
+## Plugin List
 
 See [selection criteria](#Plugin-selection-criteria) for why these specific plugins are acceptable.
 
@@ -93,6 +117,41 @@ See [selection criteria](#Plugin-selection-criteria) for why these specific plug
 **Lisp Exception** (structural editing for uniform syntax):
 
 - **vim-sexp**: Paredit-style editing for s-expressions
+
+**Total: 8 plugins** - 5 local (absolute control) + 3 nixpkgs (complex builds)
+
+### Plugin Management
+
+**Revolutionary Approach**: Pure Nix declarative plugin management replaces traditional plugin managers.
+
+#### Local Plugins (5) - Managed via `plugins.nix`
+```nix
+# Declarative plugin definitions with exact version control
+vim-surround = {
+  owner = "tpope";
+  repo = "vim-surround";
+  rev = "3d188ed2113431cf8dac77be61b842acb64433d9";  # Exact commit
+  sha256 = "sha256-abc123...";                         # Cryptographic integrity
+};
+```
+
+#### Nixpkgs Plugins (3) - Managed via `default.nix`
+Complex plugins that benefit from Nix's build system: nvim-lspconfig, nvim-treesitter, nvim-treesitter-textobjects.
+
+#### Plugin Commands
+```bash
+# List all plugins with breakdown
+nix run .#plugins list
+
+# Show plugin statistics
+nix run .#plugins stats
+
+# Check for updates
+nix run .#plugins check-updates
+
+# Plugin management environment
+nix develop .#plugins
+```
 
 ### Plugin selection criteria
 
@@ -133,6 +192,28 @@ Each language includes appropriate tooling based on ecosystem maturity:
 - **LaTeX** - LSP (texlab), treesitter
 - **Lua** - formatter (stylua)
 - **Python** - LSP (pyright), treesitter, formatter (black)
+
+## Desktop Integration
+
+Nvim-nix provides seamless GUI integration while maintaining the terminal-focused workflow:
+
+### Terminal Emulator Support
+- **Auto-detection**: Automatically finds and uses the best available terminal
+- **8 Supported terminals**: kitty, alacritty, wezterm, gnome-terminal, konsole, terminator, xterm, st
+- **Desktop environment aware**: Uses gnome-terminal on GNOME, konsole on KDE, etc.
+
+### File Manager Integration
+```nix
+programs.nvimNix = {
+  enable = true;
+  terminalEmulator = "kitty";  # or "auto" for detection
+  enableDesktopEntry = true;   # Creates "Open with Neovim" entries
+};
+```
+After installation, you can:
+- Right-click text files → "Open with Neovim"
+- Find "Neovim" in your application menu
+- Use file associations for various text formats
 
 ## Key Bindings
 
@@ -256,11 +337,66 @@ ya(              " Yank around s-expression
 ci(              " Change inside s-expression
 ```
 
-## Customization
+## Module Configuration
 
-### Adding a New Language
+### Home Manager Options
 
-Edit `default.nix` and add to `supportedLanguages`:
+```nix
+programs.nvimNix = {
+  enable = true;
+  package = pkgs.my-neovim;            # Custom package override
+  enableDevTools = true;               # Install formatters/linters
+  extraConfig = "vim.opt.tabstop = 2"; # Custom Lua config
+  shellAliases = {                     # Shell aliases
+    vi = "nvim";
+    vim = "nvim";
+    v = "nvim-gui";                    # GUI launcher
+  };
+
+  # Desktop integration
+  terminalEmulator = "kitty";          # or "auto"
+  installTerminalEmulator = true;      # Install the terminal
+  enableDesktopEntry = true;           # Create desktop entries
+  createGuiWrapper = true;             # Create nvim-gui command
+};
+```
+
+### NixOS Options
+
+```nix
+programs.nvimNix = {
+  enable = true;
+  package = pkgs.my-neovim;     # Custom package override
+  defaultEditor = true;         # Set as system EDITOR
+  enableDevTools = true;        # Install tools system-wide
+
+  # Desktop integration
+  terminalEmulator = "auto";    # Auto-detect based on DE
+  enableDesktopEntry = true;    # System-wide desktop entries
+  enableGitIntegration = true;  # Configure git to use nvim
+};
+```
+
+## Development Workflow
+
+### Quick Commands
+```bash
+# List installed plugins with breakdown
+nix run .#plugins list
+
+# Show plugin statistics
+nix run .#plugins stats
+
+# Check for plugin updates
+nix run .#plugins check-updates
+
+# Plugin management environment
+nix develop .#plugins
+```
+
+### Adding a Language
+
+Edit `lib/languages.nix` and add to `supportedLanguages`:
 
 ```nix
 rust = {
@@ -276,28 +412,136 @@ rust = {
 };
 ```
 
-The configuration automatically:
+### Adding a Plugin
 
-- Includes the LSP server in the build
-- Generates setup code
-- Adds the treesitter parser
-- Adds the formatter to your environment
+Edit `plugins.nix` and add to `pluginSources`:
 
-### Adding Key Bindings
+```nix
+vim-commentary = {
+  owner = "tpope";
+  repo = "vim-commentary";
+  rev = "b90f965880e761a026ae0c1e1d7174e65e4d7b45";  # Get with nix-prefetch-github
+  sha256 = lib.fakeHash;  # Will be computed automatically
+};
+```
 
-Follow the established patterns:
+### Updating Plugins
 
-- `<leader>f*` for finding operations
-- `<leader>g*` for git operations
-- `<leader>c*` for code operations
-- `<leader>n*` for nix operations
-- Use `<localleader>` for filetype-specific operations
+```bash
+# Get latest commit info
+nix-prefetch-github tpope vim-surround
+
+# Update plugins.nix with new rev and sha256
+# Test the build
+nix build .#neovim
+```
+
+## Architecture
 
 ### File Structure
 
-- `default.nix` - Main Neovim configuration and package definition
-- `flake.nix` - Nix flake with inputs and outputs
+- `flake.nix` - Flake inputs/outputs with clean organization
+- `plugins.nix` - Declarative plugin definitions with exact versions
+- `lib/languages.nix` - Language support definitions
+- `lib/plugin-management.nix` - Nix plugin utilities
+- `lib/desktop.nix` - Desktop integration utilities
+- `modules/` - Home Manager and NixOS integration modules
 - `vimrc.vim` - Core vim configuration following traditional patterns
+
+### Plugin Architecture
+
+```
+Plugins (8 total)
+├── Local Plugins (5) - plugins.nix
+│   ├── vim-surround
+│   ├── vim-vinegar
+│   ├── vim-repeat
+│   ├── vim-fugitive
+│   └── vim-sexp
+└── Nixpkgs Plugins (3) - default.nix
+    ├── nvim-lspconfig
+    ├── nvim-treesitter
+    └── nvim-treesitter-textobjects
+```
+
+**Benefits**:
+- Local plugins: Absolute control with exact version pinning
+- Nixpkgs plugins: Complex builds handled by Nix ecosystem
+- All plugins: Automatic loading, no manual `:packadd` required
+
+## Troubleshooting
+
+### Formatters Not Available
+
+**Problem**: Commands like `:!black %` fail with "command not found"
+
+**Solution**: You're using the minimal variant. Use one of:
+- `nix run github:mikabohinen/nvim-nix#dev` (app with tools)
+- Install via Home Manager/NixOS modules with `enableDevTools = true`
+- Use `nix develop` for development shell
+
+### LSP Servers Not Found
+
+**Problem**: LSP features not working
+
+**Solution**: Ensure you're using the full package or have `enableDevTools = true` in modules
+
+### Custom Configuration
+
+Add custom config via Home Manager:
+
+```nix
+programs.nvimNix.extraConfig = ''
+  -- Custom Lua configuration
+  vim.opt.relativenumber = false
+  vim.keymap.set('n', '<leader>w', ':w<CR>')
+'';
+```
+
+### Desktop Integration Issues
+
+**Problem**: Desktop entries not appearing or wrong terminal used
+
+**Solution**:
+```nix
+programs.nvimNix = {
+  enable = true;
+  terminalEmulator = "kitty";  # Force specific terminal
+  installTerminalEmulator = true;
+};
+```
+
+Check available terminals:
+```bash
+nix eval .#lib.versionInfo.available-terminals
+```
+
+### Plugin Management
+
+**Problem**: Need to add, update, or remove plugins
+
+**Solution**: Use pure Nix expressions instead of manual script management:
+
+```bash
+# List current plugins
+nix run .#plugins list
+
+# Check for updates
+nix run .#plugins check-updates
+
+# Get update instructions
+nix run .#plugins update-info
+```
+
+Add plugins by editing `plugins.nix`:
+```nix
+new-plugin = {
+  owner = "author";
+  repo = "plugin-name";
+  rev = "commit-hash";      # Get with nix-prefetch-github
+  sha256 = lib.fakeHash;    # Auto-computed
+};
+```
 
 ## License
 

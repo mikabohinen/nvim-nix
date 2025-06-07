@@ -1,5 +1,9 @@
+" vimrc.vim
+
 " Vim configuration following minimalist philosophy
-" Based on Tim Pope's sensible.vim and community best practices
+
+" Section: Bootstrap
+
 
 " =============================================================================
 " CORE VIM SETTINGS
@@ -430,3 +434,5 @@ packadd! matchit
 " =============================================================================
 " END OF CONFIGURATION
 " =============================================================================
+
+" vim:set et sw=2 foldmethod=expr

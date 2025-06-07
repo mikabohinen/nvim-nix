@@ -1,11 +1,9 @@
 {
-  description = "My custom Neovim distribution";
+  description = "A reproducible and minimal Neovim configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-
-    # Neovim nightly for latest features
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -13,46 +11,48 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [
-            inputs.neovim-nightly-overlay.overlays.default
-          ];
-        };
+    flake-utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ inputs.neovim-nightly-overlay.overlays.default ];
+          };
 
-        myNeovim = pkgs.callPackage ./default.nix {
-          inherit pkgs;
-        };
+          nvimPackages = pkgs.callPackage ./default.nix { inherit pkgs; };
 
-        # Simple NixOS module for easy integration
-        nixosModule = { config, lib, pkgs, ... }:
-          with lib;
-          let cfg = config.programs.mynvim;
-          in {
-            options.programs.mynvim = {
-              enable = mkEnableOption "Enable my custom neovim distribution";
-            };
+          utils = import ./lib/utils.nix { inherit pkgs lib; };
+          lib = nixpkgs.lib;
 
-            config = mkIf cfg.enable {
-              environment.systemPackages = [ myNeovim ];
-              environment.variables.EDITOR = "nvim";
+          homeManagerModule = import ./modules/home-manager.nix { inherit nvimPackages; };
+          nixosModule = import ./modules/nixos.nix { inherit nvimPackages; };
+
+        in
+        {
+          packages = {
+            default = nvimPackages.full;
+            neovim = nvimPackages.neovim;
+            neovim-full = nvimPackages.full;
+            dev-tools = pkgs.buildEnv {
+              name = "nvim-dev-tools";
+              paths = nvimPackages.languageServers ++ nvimPackages.formatters ++ nvimPackages.extraTools;
             };
           };
-      in
-      {
-        packages = {
-          default = myNeovim;
-          neovim = myNeovim;
-        };
+          apps = utils.makeApps nvimPackages;
 
-        apps.default = {
-          type = "app";
-          program = "${myNeovim}/bin/nvim";
-        };
+          devShells = {
+            default = utils.makeDevShell nvimPackages;
+            plugins = nvimPackages.pluginInfo.devShell;
+          };
 
-        nixosModules.default = nixosModule;
-      }
-    );
+          nixosModules.default = nixosModule;
+          homeManagerModules.default = homeManagerModule;
+
+          lib.versionInfo = utils.getVersionInfo nvimPackages;
+        }
+      ) // {
+      overlays.default = final: prev: {
+        nvim-nix = self.packages.${prev.system}.default;
+      };
+    };
 }

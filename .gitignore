@@ -45,7 +45,6 @@ luac.out
 *.x86_64
 *.hex
 
-
 # ---> Vim
 # Swap
 [._]*.s[a-v][a-z]
@@ -67,3 +66,8 @@ tags
 # Persistent undo
 [._]*.un~
 
+# ---> Local Vim Plugin Management
+# Include plugin source code but not git history
+vim/pack/*/start/*/.git/
+# Temporary files from plugin management scripts
+vim/scripts/*.tmp
