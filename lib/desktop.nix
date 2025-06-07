@@ -22,7 +22,7 @@ rec {
       name = "WezTerm";
     };
     gnome-terminal = {
-      package = pkgs.gnome.gnome-terminal;
+      package = pkgs.gnome-terminal;
       command = "gnome-terminal --";
       name = "GNOME Terminal";
     };
