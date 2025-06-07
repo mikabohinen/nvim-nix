@@ -140,10 +140,8 @@ in {
           exec = execCommand;
           icon = "nvim";
           terminal = false;
-          categories = [ "Utility" "TextEditor" "Development" "ConsoleOnly" ];
+          categories = [ "Utility" "TextEditor" "Development" ];
           mimeType = baseMimeTypes ++ cfg.extraMimeTypes;
-          startupNotify = false;
-          keywords = [ "vim" "neovim" "editor" "text" "code" "development" ];
         };
       };
     }
