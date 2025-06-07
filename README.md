@@ -131,7 +131,7 @@ vim-surround = {
   owner = "tpope";
   repo = "vim-surround";
   rev = "3d188ed2113431cf8dac77be61b842acb64433d9";  # Exact commit
-  sha256 = "sha256-abc123...";                         # Cryptographic integrity
+  sha256 = "sha256-abc123...";                       # Cryptographic integrity
 };
 ```
 
