@@ -114,7 +114,7 @@ See [selection criteria](#Plugin-selection-criteria) for why these specific plug
 
 ### Plugin Management
 
-**Revolutionary Approach**: Pure Nix declarative plugin management replaces traditional plugin managers.
+Pure Nix declarative plugin management replaces traditional plugin managers.
 
 #### Local Plugins (5) - Managed via `plugins.nix`
 ```nix
