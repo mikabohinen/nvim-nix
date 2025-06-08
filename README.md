@@ -217,6 +217,7 @@ Key bindings follow **functional grouping**:
 - **`<leader>g*`**: Git operations
 - **`<leader>c*`**: Code operations (LSP, diagnostics, formatting)
 - **`<leader>n*`**: Nix development workflow
+- **`<leader>w*`**: Workspace management (LSP)
 - **Navigation**: Native vim patterns (`]b`, `[q`, etc.)
 
 ### Core Finding Operations
@@ -251,6 +252,23 @@ Key bindings follow **functional grouping**:
 <leader>l / <leader>L   " Open/close location list
 ]q / [q                 " Next/previous quickfix
 ]l / [l                 " Next/previous location list
+
+" Window movement
+<C-J>                   " Move to next window
+<C-K>                   " Move to previous window
+```
+
+### Search & Navigation
+
+```vim
+" Enhanced search patterns (very magic mode)
+<leader>/        " Search with \v (very magic)
+<leader>?        " Reverse search with \v (very magic)
+
+" Search control
+<Esc><Esc>       " Clear search highlighting
+n / N            " Next/previous search (auto-centered)
+* / #            " Search word under cursor (auto-centered)
 ```
 
 ### LSP & Diagnostics
@@ -265,7 +283,7 @@ gD               " Go to declaration
 gy               " Go to type definition
 K                " Hover documentation
 <leader>cr       " Rename symbol
-<leader>ca       " Code actions
+<leader>ca       " Code actions (normal and visual mode)
 <leader>ck       " Signature help
 ```
 
@@ -302,22 +320,33 @@ K                " Hover documentation
 <leader>wl       " List workspace folders
 ```
 
-### Search
+### Treesitter Features
 
-```vim
-<Esc><Esc>       " Clear search highlighting
-/ and ?          " Enhanced search (very magic mode)
-```
-
-### Treesitter Text Objects
+**Text objects** (work with operators like `d`, `y`, `c`):
 
 ```vim
 af / if          " Around/inside function
 ac / ic          " Around/inside class
 al / il          " Around/inside loop
 aa / ia          " Around/inside parameter
-]f / [f          " Next/previous function
-]c / [c          " Next/previous class
+```
+
+**Movement**:
+
+```vim
+]f / [f          " Next/previous function start
+]c / [c          " Next/previous class start
+]F / [F          " Next/previous function end
+]C / [C          " Next/previous class end
+```
+
+**Incremental selection** (for precise text selection):
+
+```vim
+gnn              " Start incremental selection
+grn              " Increment to next node
+grc              " Increment to scope
+grm              " Decrement selection
 ```
 
 ### Nix Development Workflow
@@ -365,18 +394,73 @@ ya(              " Yank around s-expression
 ci(              " Change inside s-expression
 ```
 
-### LSP Diagnostic Commands
+## Commands
 
-Additional commands available for diagnostics management:
+### Utility Commands
 
 ```vim
-:DiagnosticsQF        " Send all diagnostics to quickfix
-:DiagnosticsAll       " Show all project diagnostics
-:DiagnosticsErrors    " Show only errors
-:DiagnosticsWarnings  " Show only warnings
+:H [topic]           " Open help in vertical split (e.g., :H buffers)
+:O [file...]         " Open file(s) with system default application
+:StripWhitespace     " Remove trailing whitespace from entire buffer
+```
+
+### Command Shortcuts
+
+```vim
+:W                   " Same as :w (save)
+:Q                   " Same as :q (quit)
+:WQ / :Wq            " Same as :wq (save and quit)
+:Qa                  " Same as :qa (quit all)
+```
+
+### Configuration Management
+
+```vim
+:EditVimrc           " Edit the main vimrc configuration
+:ReloadVimrc         " Reload the vimrc configuration
+```
+
+### Nix Development Commands
+
+**File Management**:
+```vim
+:EditFlake           " Edit flake.nix
+:EditDefault         " Edit default.nix
+```
+
+**Build and Run**:
+```vim
+:NixRun [target]     " Run nix package (defaults to current flake)
+:NixBuild [target]   " Build nix package (defaults to current flake)
+:NixShell [target]   " Enter nix develop shell
+```
+
+**Package Management**:
+```vim
+:NixUpdate [input]   " Update flake.lock (optionally specific input)
+:NixCheck [args]     " Run nix flake check
+:NixClean            " Clean nix store (with confirmation)
+:NixInfo [target]    " Show flake information
+```
+
+**Search and Analysis**:
+```vim
+:NixSearch <term>     " Search nixpkgs for packages
+:NixEval <expr>       " Evaluate nix expression
+:NixWhyDepends <args> " Show dependency chain
+```
+
+### LSP Diagnostic Commands
+
+```vim
+:DiagnosticsQF                 " Send all diagnostics to quickfix
+:DiagnosticsLoc                " Send buffer diagnostics to location list
+:DiagnosticsAll                " Show all project diagnostics
+:DiagnosticsErrors             " Show only errors
+:DiagnosticsWarnings           " Show only warnings
 :DiagnosticsToggleVirtualText  " Toggle inline diagnostic text
-:LspRestart          " Restart LSP client
-:LspInfo             " Show LSP client information
+:LspRestart                    " Restart LSP client
+:LspInfo                       " Show LSP client information
 ```
 
 ## Module Configuration
@@ -629,7 +713,7 @@ nix eval .#lib.versionInfo.available-terminals
 
 **Problem**: Need to add, update, or remove plugins
 
-**Solution**: Use pure Nix expressions instead of manual script management:
+**Solution**: Use built plugin tooling:
 
 ```bash
 # List current plugins

@@ -1,66 +1,82 @@
 " vimrc.vim
 
-" Vim configuration following minimalist philosophy
+" Vim configuration following a minimalist philosophy
 
-" =============================================================================
-" CORE VIM SETTINGS
+" Section: Bootstrap and Environment Detection
 " =============================================================================
 
-" Enable vim improvements
 set nocompatible
 filetype plugin indent on
 syntax enable
 
-" Essential behavior
-set backspace=indent,eol,start
-set hidden
-set autoread
-set complete-=i
-set smarttab
+" Environment detection for cross-platform compatibility
+let s:is_windows = has('win32') || has('win64')
+let s:is_mac = has('mac') || has('macunix')
+let s:is_gui = has('gui_running')
+let s:has_terminal = exists(':terminal')
 
-" Command line and completion
-set history=1000
-set wildmenu
-set wildoptions=tagfile
-set wildmode=longest:longest,full
-set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.DS_Store,*.db
-set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
+" Mouse configuration based on environment
+if has('gui_running') || (!empty($DISPLAY) && has('gui'))
+  set mouse=nvi
+else
+  set mouse=
+endif
 
-" Enhanced file finding
-set path+=**
-
-" Display settings
-set display=truncate
-set scrolloff=1
-set sidescrolloff=5
-set ruler
-set number
-set relativenumber
-set showcmd
-set laststatus=2
-
-" Session management
-set sessionoptions-=options
-set viewoptions-=options
-
-" Colorscheme
-colorscheme habamax
-
-" =============================================================================
-" SEARCH AND NAVIGATION
+" Section: File Management and Directories
 " =============================================================================
 
-" Smart searching
+" XDG-compliant directory setup
+if !empty($XDG_DATA_HOME)
+  let s:data_home = substitute($XDG_DATA_HOME, '/$', '', '') . '/nvim/'
+elseif s:is_windows
+  let s:data_home = expand('~/AppData/Local/nvim/')
+else
+  let s:data_home = expand('~/.local/share/nvim/')
+endif
+
+" Persistent undo with better directory management
+if has('persistent_undo')
+  set undofile
+  let &undodir = s:data_home . 'undo//'
+  if !isdirectory(&undodir)
+    try
+      call mkdir(&undodir, 'p')
+    catch
+      echohl ErrorMsg | echo "Failed to create undo directory: " . &undodir | echohl None
+    endtry
+  endif
+endif
+
+" Backup and swap with XDG compliance
+set backup
+let &backupdir = s:data_home . 'backup//'
+let &directory = s:data_home . 'swap//'
+
+for s:dir in [&backupdir, &directory]
+  if !isdirectory(s:dir) 
+    try
+      call mkdir(s:dir, 'p') 
+    catch
+      echohl ErrorMsg 
+      echo "Failed to create directory: " . s:dir 
+      echohl None
+    endtry
+  endif
+endfor
+
+" Section: Search, Navigation, and Tags
+" =============================================================================
+
+" Enhanced search settings
 set incsearch
 set hlsearch
 set ignorecase
 set smartcase
 
-" Enhanced search patterns
-nnoremap / /\v
-vnoremap / /\v
-nnoremap ? ?\v
-vnoremap ? ?\v
+" Better path and include settings
+set path+=**
+set include=
+set tags=./tags;
 
 " Clear search highlighting
 nnoremap <silent> <Esc><Esc> :nohlsearch<CR>
@@ -71,12 +87,78 @@ nnoremap N Nzzzv
 nnoremap * *zzzv
 nnoremap # #zzzv
 
+" Section: Display and Interface
 " =============================================================================
-" LEADER MAPPINGS
+
+set display=truncate
+set scrolloff=1
+set sidescrolloff=5
+set ruler
+set number
+set relativenumber
+set showcmd
+set confirm
+set visualbell
+set laststatus=2
+set lazyredraw
+
+" List characters
+if (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8') && v:version >= 700
+  let &listchars = "tab:\u21e5\u00b7,trail:\u2423,extends:\u21c9,precedes:\u21c7,nbsp:\u00b7"
+  let &fillchars = "vert:\u250b,fold:\u00b7"
+else
+  set listchars=tab:>\ ,trail:-,extends:>,precedes:<
+endif
+
+" Section: Command Line and Completion
+" =============================================================================
+
+set history=1000
+set wildmenu
+set wildmode=longest:longest,full
+set wildoptions=tagfile
+set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.DS_Store,*.db
+set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
+
+" Section: Editing text and indent
+" =============================================================================
+
+set backspace=indent,eol,start
+set complete-=i
+set infercase
+set showmatch    " Especially useful for Lisp
+set virtualedit=block
+set shiftround
+set smarttab
+set autoread
+set autowrite
+
+if has('vim_starting')
+  set tabstop=8
+  set shiftwidth=0 softtabstop=-1
+  set autoindent
+  set omnifunc=syntaxcomplete#Complete
+  set completefunc=syntaxcomplete#Complete
+endif
+
+" Section: Non Leader Mappings
+" =============================================================================
+
+" Window movement
+nnoremap <C-J> <C-w>w
+nnoremap <C-K> <C-w>W
+
+" Section: Leader Mappings
 " =============================================================================
 
 let mapleader = " "
 let maplocalleader = ","
+
+" Enhanced search patterns
+nnoremap <leader>/ /\v
+vnoremap <leader>/ /\v
+nnoremap <leader>? ?\v
+vnoremap <leader>? ?\v
 
 " File operations
 nnoremap <leader><leader> :find *
@@ -121,41 +203,28 @@ nnoremap <leader>nC :NixClean<CR>
 nnoremap <leader>ef :EditFlake<CR>
 nnoremap <leader>ed :EditDefault<CR>
 
-" LSP and diagnostics mapping (inlcuded here because we define commands in
-" this file and not default.nix
+" LSP and diagnostics mapping (included here because we define commands in
+" this file and not default.nix)
 nnoremap <leader>cq :DiagnosticsQF<CR>
 nnoremap <leader>cl :DiagnosticsLoc<CR>
 nnoremap <leader>cs :call <SID>ShowDiagnosticSummary()<CR>
 nnoremap <leader>cR :LspRestart<CR>
 nnoremap <leader>cI :LspInfo<CR>
 
-" =============================================================================
-" FILE MANAGEMENT
+" Section: External Commands and Integration
 " =============================================================================
 
-" Persistent undo
-if has('persistent_undo')
-  set undofile
-  set undodir=~/.vim/undo//
-  if !isdirectory(expand('~/.vim/undo'))
-    call mkdir(expand('~/.vim/undo'), 'p')
-  endif
+" Enhanced grep settings
+set grepformat=%f:%l:%c:%m,%f:%l:%m,%f:%l%m,%f\ \ %l%m
+if executable('rg')
+  set grepprg=rg\ --vimgrep\ --smart-case
+elseif executable('ag')
+  set grepprg=ag\ --vimgrep
+elseif has('unix')
+  set grepprg=grep\ -rn\ $*\ /dev/null
 endif
 
-" Backup and swap files
-set backup
-set backupdir=~/.vim/backup//
-set directory=~/.vim/swap//
-
-" Create backup directories
-for s:dir in [&backupdir, &directory]
-  if !isdirectory(s:dir)
-    call mkdir(s:dir, 'p')
-  endif
-endfor
-
-" =============================================================================
-" ABBREVIATIONS AND COMMANDS
+" Section: Abbreviations and Commands
 " =============================================================================
 
 " Common typo corrections
@@ -179,22 +248,21 @@ command! ReloadVimrc source ~/src/nvim-nix/vimrc.vim
 " Utility commands
 command! StripWhitespace call StripTrailingWhitespace()
 command! -nargs=? -complete=help H vertical help <args>
-
+command! -nargs=* -complete=file O call s:Open(<f-args>)
 
 " Diagnostic commands
-command! DiagnosticsQF lua vim.diagnostic.setqflist({open = true})
-command! DiagnosticsLoc lua vim.diagnostic.setloclist({open = true})
-command! DiagnosticsAll lua vim.diagnostic.setqflist({open = true, title = 'All Project Diagnostics'})
-command! DiagnosticsErrors lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.ERROR, open = true, title = 'Project Errors'})
-command! DiagnosticsWarnings lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.WARN, open = true, title = 'Project Warnings'})
-command! DiagnosticsToggleVirtualText lua vim.diagnostic.config({virtual_text = not vim.diagnostic.config().virtual_text})
+if has('nvim')
+  command! DiagnosticsQF lua vim.diagnostic.setqflist({open = true})
+  command! DiagnosticsLoc lua vim.diagnostic.setloclist({open = true})
+  command! DiagnosticsAll lua vim.diagnostic.setqflist({open = true, title = 'All Project Diagnostics'})
+  command! DiagnosticsErrors lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.ERROR, open = true, title = 'Project Errors'})
+  command! DiagnosticsWarnings lua vim.diagnostic.setqflist({severity = vim.diagnostic.severity.WARN, open = true, title = 'Project Warnings'})
+  command! DiagnosticsToggleVirtualText lua vim.diagnostic.config({virtual_text = not vim.diagnostic.config().virtual_text})
+  command! LspRestart lua vim.lsp.stop_client(vim.lsp.get_active_clients()); edit
+  command! LspInfo lua vim.cmd('LspInfo')
+endif
 
-" LSP management commands
-command! LspRestart lua vim.lsp.stop_client(vim.lsp.get_active_clients()); edit
-command! LspInfo lua vim.cmd('LspInfo')
-
-" =============================================================================
-" FUNCTIONS
+" Section: Functions
 " =============================================================================
 
 function! ToggleQuickFix()
@@ -247,8 +315,14 @@ function! s:ShowDiagnosticSummary()
   echo printf("Diagnostics: %d errors, %d warnings, %d hints", l:errors, l:warnings, l:hints)
 endfunction
 
-" =============================================================================
-" AUTOCOMMANDS
+function! s:Open(...) abort
+  let cmd = s:is_windows ? 'start' : executable('xdg-open') ? 'xdg-open' : 'open'
+  let args = a:0 ? copy(a:000) : [expand('%:p')]
+  call map(args, 'shellescape(v:val)')
+  return system(cmd . ' ' . join(args, ' '))
+endfunction
+
+" Section: Autocommands
 " =============================================================================
 
 augroup vimrc
@@ -256,9 +330,9 @@ augroup vimrc
 
   " Return to last cursor position
   autocmd BufReadPost *
-    \ if line("'\"") > 1 && line("'\"") <= line("$") |
-    \   exe "normal! g'\"" |
-    \ endif
+    \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+    \ |   exe "normal! g`\""
+    \ | endif
 
   " Auto-balance windows on resize
   autocmd VimResized * wincmd =
@@ -267,15 +341,23 @@ augroup vimrc
   autocmd BufWritePre *.py,*.js,*.ts,*.lua,*.nix,*.md,*.txt
     \ call StripTrailingWhitespace()
 
-  " Enhanced buffer behavior
-  autocmd FileType help nnoremap <buffer> q :q<CR>
-  autocmd FileType qf nnoremap <buffer> q :q<CR>
-  autocmd FileType qf nnoremap <buffer> <CR> <CR>:cclose<CR>
+  " Buffer behavior
+  autocmd FileType help,qf nnoremap <buffer> q :q<CR>
+
+  " Smart commenting (basic version)
+  autocmd FileType vim setlocal commentstring=\"\ %s
+  autocmd FileType vim setlocal keywordprg=:help |
+      \ if &foldmethod !=# 'diff' | setlocal foldmethod=expr foldlevel=1 | endif |
+      \ setlocal foldexpr=getline(v:lnum)=~'^\"\ Section:'?'>1':'='
+  autocmd FileType python,bash,sh,zsh setlocal commentstring=#\ %s
+  autocmd FileType nix setlocal commentstring=#\ %s
+  autocmd FileType haskell setlocal commentstring=--\ %s
+  autocmd FileType java setlocal commentstring=//\ %s
 
   " Language-specific settings
   autocmd FileType lisp,scheme,clojure setlocal lisp shiftwidth=2
   autocmd FileType python setlocal expandtab shiftwidth=4 softtabstop=4
-  autocmd FileType html,css,javascript,typescript,json,nix setlocal shiftwidth=2
+  autocmd FileType html,css,javascript,typescript,json,nix,vim setlocal shiftwidth=2
 
 augroup END
 
@@ -466,20 +548,46 @@ endfunction
 command! EditFlake edit flake.nix
 command! EditDefault edit default.nix
 
-" =============================================================================
-" MISCELLANEOUS
+" Section: Platform-Specific Tweaks
 " =============================================================================
 
-" Enhanced status line
-set statusline=%f\ %h%w%m%r%{LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
-
-" UTF-8 encoding
-if &encoding ==# 'latin1' && has('gui_running')
-  set encoding=utf-8
+if s:is_mac
+  set macmeta
+elseif s:is_windows
+  set shell=cmd
+  set shellcmdflag=/c
 endif
+
+if $TERM =~# '^screen'
+  if exists('+ttymouse') && &ttymouse ==# ''
+    set ttymouse=xterm
+  endif
+endif
+
+" Section: Colorscheme and Final Setup
+" =============================================================================
+
+" Better color detection
+if $TERM !~? 'linux' && &t_Co == 8
+  set t_Co=16
+endif
+
+colorscheme habamax
 
 " Load matchit for better % matching
 packadd! matchit
+
+" UTF-8 encoding fallback
+if &encoding ==# 'latin1' && s:is_gui
+  set encoding=utf-8
+endif
+
+" Better status line
+set statusline=%f\ %h%w%m%r%{LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
+
+" Session management
+set sessionoptions=blank,buffers,folds,help,tabpages,winsize,terminal,sesdir,globals
+set viewoptions-=options
 
 " =============================================================================
 " END OF CONFIGURATION
