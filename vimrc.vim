@@ -2,9 +2,6 @@
 
 " Vim configuration following minimalist philosophy
 
-" Section: Bootstrap
-
-
 " =============================================================================
 " CORE VIM SETTINGS
 " =============================================================================
@@ -215,24 +212,13 @@ function! StripTrailingWhitespace()
 endfunction
 
 function! LspDiagnosticCounts()
-  if !exists('*v:lua.vim.diagnostic.get')
+  if !has('nvim')
     return ''
   endif
   
-  let l:counts = v:lua.vim.diagnostic.get(0)
-  let l:errors = 0
-  let l:warnings = 0
-  let l:hints = 0
-  
-  for diagnostic in l:counts
-    if diagnostic.severity == 1  " Error
-      let l:errors += 1
-    elseif diagnostic.severity == 2  " Warning
-      let l:warnings += 1
-    elseif diagnostic.severity == 4  " Hint
-      let l:hints += 1
-    endif
-  endfor
+  let l:errors = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.ERROR})')
+  let l:warnings = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.WARN})')
+  let l:hints = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.HINT})')
   
   let l:result = ''
   if l:errors > 0
@@ -249,14 +235,14 @@ function! LspDiagnosticCounts()
 endfunction
 
 function! s:ShowDiagnosticSummary()
-  if !exists('*v:lua.vim.diagnostic.get')
-    echo "LSP diagnostics not available"
+  if !has('nvim')
+    echo "LSP diagnostics only available in Neovim"
     return
   endif
   
-  let l:errors = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.ERROR}))
-  let l:warnings = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.WARN}))
-  let l:hints = len(v:lua.vim.diagnostic.get(0, {severity = v:lua.vim.diagnostic.severity.HINT}))
+  let l:errors = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.ERROR})')
+  let l:warnings = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.WARN})')
+  let l:hints = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.HINT})')
   
   echo printf("Diagnostics: %d errors, %d warnings, %d hints", l:errors, l:warnings, l:hints)
 endfunction
