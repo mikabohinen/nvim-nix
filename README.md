@@ -5,16 +5,8 @@ minimalist vim philosophy with essential modern enhancements.
 
 ## Features
 
-- 🔄 **Reproducible**: Same setup on any machine with Nix
-- 🧩 **Modular**: Organized language support with LSP, formatters, and treesitter
-- 🔌 **Extensible**: Easy to add new languages and plugins
-- 🚀 **Batteries Available**: Pre-configured for multiple languages with external tools
-- 🔧 **Nix Integration**: Built-in commands for Nix development workflow
-- ⚡ **Minimal**: Only 8 essential plugins for maximum performance
-- 🏠 **Home Manager & NixOS**: First-class module support for both
-- 🛠️ **Multiple Variants**: Choose from minimal editor to full development environment
-- 🖥️ **Desktop Integration**: Seamless GUI integration with terminal emulator auto-detection
-- 🔒 **Pure Nix**: Declarative plugin management with cryptographic integrity
+- 🔧 **Minimal**: Only 8 essential plugins for maximum performance and focus
+- ⚡ **Just Works**: Reproducible setup with zero configuration on any machine with Nix
 
 ## Quick Start
 
@@ -195,7 +187,7 @@ Each language includes appropriate tooling based on ecosystem maturity:
 
 ## Desktop Integration
 
-Nvim-nix provides seamless GUI integration while maintaining the terminal-focused workflow:
+Nvim-Nix provides seamless GUI integration while maintaining the terminal-focused workflow:
 
 ### Terminal Emulator Support
 - **Auto-detection**: Automatically finds and uses the best available terminal
@@ -487,6 +479,73 @@ nix build .#neovim
 ```
 
 ## Architecture
+
+### Three-Layer Approach
+
+Nvim-Nix employs a three-layer architecture that leverages the strengths of
+Nix, Vimscript, and Lua respectively. Each language does what it is good at and
+no more:
+
+#### Nix Layer (Infrastructure)
+
+*"What should exist"*
+
+- **Declarative Environment**: Packages, plugins, language servers, formatters
+- **Reproducible Systems**: Identical setups across machines and time
+- **Integration Logic**: Desktop entries, terminal detection, system configuration
+- **Dependency Management**: All external tools with exact versions
+
+```nix
+# Nix handles: "Make these tools available"
+languageServers = [ pkgs.pyright pkgs.rust-analyzer ];
+plugins = [ vim-surround vim-fugitive ];
+```
+
+#### Vimscript Layer (Behavior)
+
+*"How should Vim behave"*
+
+- **Core Workflow**: Traditional Vim commands, mappings, patterns
+- **User Interface**: Status line, quickfix integration, helper functions
+- **Command Definitions**: All :commands and <leader> mappings
+- **Editor Behavior**: Settings, autocommands, traditional vim features
+
+```vim
+" Vimscript handles: "How should the editor behave"
+nnoremap <leader>fw :grep "" .<Left><Left><Left>
+command! StripWhitespace call StripTrailingWhitespace()
+```
+
+#### Lua Layer (Modern Features)
+
+*"How should modern features work"*
+
+- **LSP Configuration**: Language server setup, capabilities, handlers
+- **Dynamic Behavior**: Buffer-local keymaps that activate in response to LSP events
+- **Modern APIs**: Diagnostic configuration, treesitter, floating windows
+- **Event-Driven**: Autocommands that respond to LSP attachment
+
+```lua
+-- Lua handles: "How should modern features integrate"
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(event)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {buffer = event.buf})
+  end,
+})
+```
+
+#### Clean Boundaries
+
+Each layer has clear responsibilities and interfaces:
+
+- **Nix → Lua**: Provides tools and generates configuration
+- **Lua → Vimscript**: Calls vim commands and integrates with existing patterns
+- **Vimscript → Lua**: Invokes lua functions for modern features
+- **No layer bypassing**: Each respects the others' domains
+
+This architecture ensures that adding a language server happens in Nix, defining
+key-mappings happens in Vimscript, configuring LSP behavior happens in Lua. Each
+language does what it is meant to do.
 
 ### File Structure
 
