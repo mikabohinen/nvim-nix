@@ -1,4 +1,4 @@
-# Nvim-Nix
+# nvim-nix
 
 A reproducible, declarative Neovim configuration using Nix flakes, following
 a minimalist Vim philosophy with essential modern enhancements.
@@ -187,7 +187,7 @@ Each language includes appropriate tooling based on ecosystem maturity:
 
 ## Desktop Integration
 
-Nvim-Nix provides seamless GUI integration while maintaining the terminal-focused workflow:
+nvim-nix provides seamless GUI integration while maintaining the terminal-focused workflow:
 
 ### Terminal Emulator Support
 - **Auto-detection**: Automatically finds and uses the best available terminal
@@ -566,7 +566,7 @@ nix build .#neovim
 
 ### Three-Layer Approach
 
-Nvim-Nix employs a three-layer architecture that leverages the strengths of
+nvim-nix employs a three-layer architecture that leverages the strengths of
 Nix, Vimscript, and Lua respectively. Each language does what it is good at and
 no more:
 
