@@ -1,7 +1,7 @@
 # Nvim-Nix
 
 A reproducible, declarative Neovim configuration using Nix flakes, following
-minimalist vim philosophy with essential modern enhancements.
+a minimalist Vim philosophy with essential modern enhancements.
 
 ## Features
 
