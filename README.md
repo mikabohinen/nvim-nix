@@ -654,4 +654,4 @@ new-plugin = {
 
 ## License
 
-MIT
+[MIT](./LICENSE)
