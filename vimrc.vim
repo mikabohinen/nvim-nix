@@ -203,11 +203,7 @@ nnoremap <leader>nC :NixClean<CR>
 nnoremap <leader>ef :EditFlake<CR>
 nnoremap <leader>ed :EditDefault<CR>
 
-" LSP and diagnostics mapping (included here because we define commands in
-" this file and not default.nix)
-nnoremap <leader>cq :DiagnosticsQF<CR>
-nnoremap <leader>cl :DiagnosticsLoc<CR>
-nnoremap <leader>cs :call <SID>ShowDiagnosticSummary()<CR>
+" LSP mappings
 nnoremap <leader>cR :LspRestart<CR>
 nnoremap <leader>cI :LspInfo<CR>
 
@@ -300,19 +296,6 @@ function! LspDiagnosticCounts()
   endif
   
   return l:result
-endfunction
-
-function! s:ShowDiagnosticSummary()
-  if !has('nvim')
-    echo "LSP diagnostics only available in Neovim"
-    return
-  endif
-  
-  let l:errors = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.ERROR})')
-  let l:warnings = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.WARN})')
-  let l:hints = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.HINT})')
-  
-  echo printf("Diagnostics: %d errors, %d warnings, %d hints", l:errors, l:warnings, l:hints)
 endfunction
 
 function! s:Open(...) abort

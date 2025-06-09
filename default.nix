@@ -42,20 +42,111 @@ let
 
     -- Configure diagnostics display
     vim.diagnostic.config({
-      virtual_text = {
-        prefix = '●',
-        spacing = 4,
-      },
+      virtual_text = false,
       signs = true,
       underline = true,
       update_in_insert = false,
       severity_sort = true,
       float = {
-        border = 'rounded',
+        border = 'single',
         source = 'always',
-        header = ''',
-        prefix = ''',
+        header = "",
+        prefix = "",
+        focusable = false,
+        close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
+        style = 'minimal',
+        max_width = 80,
+        max_height = 20,
+	pad_top = 0,
+        pad_bottom = 0,
+        wrap = true,
       },
+    })
+
+    local function open_focusable_diagnostic()
+      -- First, open a non-focusable float to get diagnostics
+      local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
+      if #diagnostics == 0 then
+        print("No diagnostics on current line")
+        return
+      end
+
+      -- Create the focusable float window manually for more control
+      local buf = vim.api.nvim_create_buf(false, true)
+      local diagnostic_text = {}
+
+      for _, diag in ipairs(diagnostics) do
+        local severity = vim.diagnostic.severity[diag.severity]
+        table.insert(diagnostic_text, string.format("[%s] %s", severity, diag.message))
+        if diag.source then
+          table.insert(diagnostic_text, string.format("Source: %s", diag.source))
+        end
+        table.insert(diagnostic_text, "") -- blank line between diagnostics
+      end
+
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, diagnostic_text)
+
+      local win = vim.api.nvim_open_win(buf, true, {
+        relative = 'cursor',
+        width = math.min(100, vim.o.columns - 4),
+        height = math.min(#diagnostic_text, 20),
+        row = 1,
+        col = 0,
+        border = 'single',
+        style = 'minimal',
+      })
+
+      vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+      vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+
+      vim.api.nvim_buf_set_keymap(buf, 'n', 'q', '<cmd>close<cr>', { noremap = true, silent = true })
+
+      -- Auto-close on buffer leave
+      vim.api.nvim_create_autocmd("BufLeave", {
+        buffer = buf,
+        once = true,
+        callback = function()
+          if vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_win_close(win, true)
+          end
+        end
+      })
+    end
+
+    -- Custom diagnostic highlights for better visibility
+    vim.api.nvim_set_hl(0, 'DiagnosticFloatingError', {
+      fg = '#ff6b6b', bg = 'NONE', bold = true
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticFloatingWarn', {
+      fg = '#ffa500', bg = 'NONE', bold = true
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticFloatingInfo', {
+      fg = '#87ceeb', bg = 'NONE'
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticFloatingHint', {
+      fg = '#98fb98', bg = 'NONE'
+    })
+
+    -- Floating window background
+    vim.api.nvim_set_hl(0, 'NormalFloat', {
+      fg = 'White', bg = '#2d2d2d'
+    })
+    vim.api.nvim_set_hl(0, 'FloatBorder', {
+      fg = '#666666', bg = '#2d2d2d'
+    })
+
+    -- Sign column diagnostics
+    vim.api.nvim_set_hl(0, 'DiagnosticSignError', {
+      fg = '#ff6b6b', bg = 'NONE'
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticSignWarn', {
+      fg = '#ffa500', bg = 'NONE'
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticSignInfo', {
+      fg = '#87ceeb', bg = 'NONE'
+    })
+    vim.api.nvim_set_hl(0, 'DiagnosticSignHint', {
+      fg = '#98fb98', bg = 'NONE'
     })
 
     -- LSP setup
@@ -93,9 +184,22 @@ let
         end, opts)
 
         -- Diagnostic display (buffer-local)
-        vim.keymap.set('n', '<leader>cd', vim.diagnostic.open_float, opts)
-        vim.keymap.set('n', '<leader>cD', vim.diagnostic.setloclist, opts)
-        vim.keymap.set('n', '<leader>cw', vim.diagnostic.setqflist, opts)
+        vim.keymap.set('n', '<leader>cdf', vim.diagnostic.open_float, { desc = 'Show diagnostic float (quick peek)' })
+        vim.keymap.set('n', '<leader>cdF', open_focusable_diagnostic, { desc = 'Show diagnostic float (scrollable)' })
+        vim.keymap.set('n', '<leader>cdl', vim.diagnostic.setloclist, { desc = 'Diagnostics to location list' })
+        vim.keymap.set('n', '<leader>cdq', vim.diagnostic.setqflist, { desc = 'Diagnostics to quickfix' })
+        vim.keymap.set('n', '<leader>cds', function()
+          local diagnostics = vim.diagnostic.get(0)
+          local errors = vim.tbl_filter(function(d) return d.severity == vim.diagnostic.severity.ERROR end, diagnostics)
+          local warnings = vim.tbl_filter(function(d) return d.severity == vim.diagnostic.severity.WARN end, diagnostics)
+          local hints = vim.tbl_filter(function(d) return d.severity == vim.diagnostic.severity.HINT end, diagnostics)
+          print(string.format("Diagnostics: %d errors, %d warnings, %d hints", #errors, #warnings, #hints))
+        end, { desc = 'Show diagnostic summary' })
+        vim.keymap.set('n', '<leader>cdt', function()
+          local config = vim.diagnostic.config()
+          vim.diagnostic.config({ virtual_text = not config.virtual_text })
+          print("Virtual text " .. (config.virtual_text and "disabled" or "enabled"))
+        end, { desc = 'Toggle virtual text' })
 
         -- Workspace management (LSP-specific)
         vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)

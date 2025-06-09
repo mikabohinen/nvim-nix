@@ -216,6 +216,7 @@ Key bindings follow **functional grouping**:
 - **`<leader>f*`**: All "finding" operations (files, buffers, search)
 - **`<leader>g*`**: Git operations
 - **`<leader>c*`**: Code operations (LSP, diagnostics, formatting)
+- **`<leader>cd*`**: Code diagnostic operations
 - **`<leader>n*`**: Nix development workflow
 - **`<leader>w*`**: Workspace management (LSP)
 - **Navigation**: Native vim patterns (`]b`, `[q`, etc.)
@@ -294,20 +295,20 @@ K                " Hover documentation
 ]D / [D          " Next/previous error (skips warnings)
 ```
 
-**Diagnostic display** (buffer-local):
+**Diagnostic operations** (organized under `<leader>cd` for "code diagnostic"):
 
 ```vim
-<leader>cd       " Show line diagnostics in floating window
-<leader>cD       " Send buffer diagnostics to location list
-<leader>cw       " Send workspace diagnostics to quickfix
+<leader>cdf      " Show diagnostic float (quick peek, auto-closes)
+<leader>cdF      " Show diagnostic float (scrollable, focusable)
+<leader>cdl      " Send buffer diagnostics to location list
+<leader>cdq      " Send all diagnostics to quickfix list
+<leader>cds      " Show diagnostic summary (error/warning/hint counts)
+<leader>cdt      " Toggle virtual text diagnostics on/off
 ```
 
-**Global diagnostic commands** (always available):
+**LSP management** (always available):
 
 ```vim
-<leader>cq       " Send all diagnostics to quickfix
-<leader>cl       " Send buffer diagnostics to location list
-<leader>cs       " Show diagnostic summary count
 <leader>cR       " Restart LSP client
 <leader>cI       " Show LSP info
 ```
@@ -624,12 +625,12 @@ Each layer has clear responsibilities and interfaces:
 
 - **Nix → Lua**: Provides tools and generates configuration
 - **Lua → Vimscript**: Calls vim commands and integrates with existing patterns
-- **Vimscript → Lua**: Invokes lua functions for modern features
 - **No layer bypassing**: Each respects the others' domains
 
-This architecture ensures that adding a language server happens in Nix, defining
-key-mappings happens in Vimscript, configuring LSP behavior happens in Lua. Each
-language does what it is meant to do.
+This architecture ensures that adding a language server happens in Nix,
+defining key-mappings happens in Vimscript (with the exception of LSP
+bindings), configuring LSP behavior happens in Lua. Each language does what it
+is meant to do.
 
 ### File Structure
 
