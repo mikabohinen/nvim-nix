@@ -1,11 +1,10 @@
 # nvim-nix
 
-A reproducible, declarative Neovim configuration using Nix flakes, following
-a minimalist Vim philosophy with essential modern enhancements.
+An opinionated, minimalist, and distraction free Neovim environment that just works.
 
 ## Features
 
-- 🔧 **Minimal**: Only 8 essential plugins for maximum performance and focus
+- 🔧 **Minimal**: Only 8 plugins for maximum performance and focus
 - ⚡ **Just Works**: Reproducible setup with zero configuration on any machine with Nix
 
 ## Quick Start
@@ -69,27 +68,44 @@ Add to your `configuration.nix`:
 
 ## Philosophy
 
-This configuration follows a minimalist approach. It embodies the belief that
-power comes from mastery of core tools, not accumulation of features. Every
-exclusion is intentional.
+It is our opinion that mastery is more important in the long run than short
+term productivity and convenience. We therefore follow a minimalist approach
+with only the most essential plugins that build upon the philosophy of Vim itself.
+This minimalism builds upon a set of core principles:
 
-### Core Principles
+1. **Vim-first**: Given that Vim has remained highly relevant for over 30 years
+   one must conclude that Vim has touched upon something more fundamental than
+   just the technology itself. Modern plugins and enhancements should therefore
+   build upon this and not replace it with tools that hide away these
+   fundamentals. This is why we prefer builtin tools like `:grep` or `:find`
+   compared to their modern counterparts. On the other hand, LSP and Treesitter
+   hook into these fundamentals to extend the capabilities of Vim itself.
 
-**Vim-First Approach**: Modern features supplement, never replace, core Vim functionality. File finding uses `:find **/*`, searching uses `:grep` and `:vimgrep`, navigation relies on native commands. LSP and Treesitter enhance this foundation without replacing it.
+2. **Reproducibility**: Modern tooling and environments grow increasingly
+   complex day by day. This complexity isn't inherently bad as long as we can
+   understand it. However, in a world where "works on my machine" is a common
+   phrase it is valuable to have an environment in which you can be productive
+   no matter where you are. You should be able to work with the same efficiency
+   whether you are on your laptop, a server, a VM, or anywhere else. To achieve
+   this we need a declarative configuration and not a set of imperative
+   commands that you type into your terminal like a set of enchantments while
+   you pray to the powers that be that everything works. Nix solves this by
+   giving us absolute control over the dependency chain and environment state.
 
-**Reproducible Development**: Nix ensures identical environments across machines. Every dependency, from language servers to formatters, is declaratively specified and automatically available.
+3. **Compositionality**: The power of Unix tools like `cd`, `ls`, `grep`,
+   `awk`, etc., is their ability to be composed with each other through piping.
+   We believe that this principle should be applied to the extensions we make
+   to Vim itself. Every addition should be able to be composed with each other
+   in a predictable way. In this way we can build increasingly complex
+   workflows while still having a good understanding of what is happening at
+   the more granular level.
 
-**Structural Thinking**: The configuration is organized around how you actually work - finding, searching, navigating, editing. Key mappings follow consistent patterns that scale with complexity.
+These principles inform our choice of plugins.
 
-**Manual Tool Mastery**: External tools (formatters, linters) remain external and are used intentionally. This builds transferable skills and deep understanding rather than editor dependencies.
-
-**Absolute Control**: Plugin management through pure Nix expressions with cryptographic integrity. No hidden dependencies or external state.
-
-**Exceptions**: Only one language gets special treatment - Lisp. Vim's text objects and structural editing work so naturally with Lisp's uniform syntax that specialized tools like paredit aren't luxuries, they're baseline usability.
 
 ## Plugin List
 
-See [selection criteria](#Plugin-selection-criteria) for why these specific plugins are acceptable.
+See [selection criteria](#Plugin-selection-criteria) for the exact details of why these specific plugins are acceptable.
 
 **Modern Necessities** (what vimscript can't handle well):
 
@@ -147,21 +163,22 @@ nix develop .#plugins
 
 ### Plugin selection criteria
 
-We include a plugin if it:
+We exclude a plugin if it does one or more of these things:
 
-- ✅ Makes you a better developer - teaches better thinking about code, tools, or workflow
-- ✅ Provides capabilities Vim fundamentally cannot - LSP protocol, syntax tree parsing, etc.
-- ✅ Enhances Vim's philosophy - extends operators, text objects, or native patterns
-- ✅ Reinforces good practices from the programming domain
-- ✅ Has educational value - helps you understand tools or concepts more deeply
+1. Hides complexity you should understand
+2. Replaces learning with convenience
+3. Creates dependencies on specific abstractions
+4. Violates Vim patterns
+5. Provides convenience over capability
 
-We exclude a plugin if it:
+If a plugin doesn't violate any of the above then we will consider
+it if and only if it also satisfies the following criteria:
 
-- ❌ Hides complexity you should understand - automation that prevents learning
-- ❌ Replaces learning with convenience - shortcuts that bypass skill development
-- ❌ Creates dependencies on specific abstractions - non-transferable workflows
-- ❌ Violates Vim patterns - replaces rather than enhances native functionality
-- ❌ Provides convenience over capability - nice-to-have rather than essential
+1. Makes you a better developer
+2. Provides capabilities Vim doesn't natively have
+3. Builds upon Vim's philosophy
+4. Reinforces good practices
+
 
 #### Examples of excluded plugins
 
@@ -182,36 +199,14 @@ Each language includes appropriate tooling based on ecosystem maturity:
 - **Markdown** - treesitter, formatter (prettier)
 - **Nix** - LSP (nixd), treesitter, formatter (nixpkgs-fmt)
 - **LaTeX** - LSP (texlab), treesitter
-- **Lua** - formatter (stylua)
+- **Lua** - treesitter, formatter (stylua)
 - **Python** - LSP (pyright), treesitter, formatter (black)
-
-## Desktop Integration
-
-nvim-nix provides seamless GUI integration while maintaining the terminal-focused workflow:
-
-### Terminal Emulator Support
-- **Auto-detection**: Automatically finds and uses the best available terminal
-- **8 Supported terminals**: kitty, alacritty, wezterm, gnome-terminal, konsole, terminator, xterm, st
-- **Desktop environment aware**: Uses gnome-terminal on GNOME, konsole on KDE, etc.
-
-### File Manager Integration
-```nix
-programs.nvimNix = {
-  enable = true;
-  terminalEmulator = "kitty";  # or "auto" for detection
-  enableDesktopEntry = true;   # Creates "Open with Neovim" entries
-};
-```
-After installation, you can:
-- Right-click text files → "Open with Neovim"
-- Find "Neovim" in your application menu
-- Use file associations for various text formats
 
 ## Key Bindings
 
 ### Philosophy: Consistent Patterns
 
-Key bindings follow **functional grouping**:
+Key bindings follow functional grouping:
 
 - **`<leader>f*`**: All "finding" operations (files, buffers, search)
 - **`<leader>g*`**: Git operations
@@ -477,7 +472,6 @@ programs.nvimNix = {
   shellAliases = {                     # Shell aliases
     vi = "nvim";
     vim = "nvim";
-    v = "nvim-gui";                    # GUI launcher
   };
 
   # Desktop integration
@@ -657,11 +651,6 @@ Plugins (8 total)
     ├── nvim-treesitter
     └── nvim-treesitter-textobjects
 ```
-
-**Benefits**:
-- Local plugins: Absolute control with exact version pinning
-- Nixpkgs plugins: Complex builds handled by Nix ecosystem
-- All plugins: Automatic loading, no manual `:packadd` required
 
 ## Troubleshooting
 

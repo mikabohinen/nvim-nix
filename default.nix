@@ -283,38 +283,18 @@ let
       done
     '';
   };
-
-  # Desktop entry
-  desktopItem = pkgs.makeDesktopItem {
-    name = "nvim";
-    desktopName = "Neovim";
-    genericName = "Text Editor";
-    comment = "Edit text files";
-    exec = "nvim %F";
-    icon = "nvim";
-    terminal = true;
-    categories = [ "Utility" "TextEditor" "Development" ];
-    mimeTypes = [
-      "text/plain" "text/x-markdown" "text/markdown" "text/x-tex"
-      "text/x-chdr" "text/x-csrc" "text/x-c++hdr" "text/x-c++src"
-      "text/x-java" "text/x-python" "application/x-shellscript"
-    ];
-  };
-
 in
 {
-  # Export individual components for modules
   inherit languageServers formatters extraTools;
 
-  # Export plugin system
-  localPlugins = plugins.plugins;  # Built plugin derivations
+  localPlugins = plugins.plugins;
   pluginUtils = pluginManagement.makePluginUtils plugins.pluginSources nixpkgsPluginNames;
 
   # Package variants
   neovim = neovimBase;
   full = pkgs.symlinkJoin {
     name = "neovim-with-tools";
-    paths = [ neovimFull desktopItem ];
+    paths = [ neovimFull ];
   };
 
   # Utility functions

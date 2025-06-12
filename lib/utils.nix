@@ -49,7 +49,7 @@ rec {
 
   # Version information for debugging
   getVersionInfo = packages: {
-    nvim-nix-version = "2.0.0";
+    nvim-nix-version = "1.0.0";
     plugin-count = 8;
     local-plugins = [
       "vim-surround"
