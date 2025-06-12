@@ -15,13 +15,6 @@ let s:is_mac = has('mac') || has('macunix')
 let s:is_gui = has('gui_running')
 let s:has_terminal = exists(':terminal')
 
-" Mouse configuration based on environment
-if has('gui_running') || (!empty($DISPLAY) && has('gui'))
-  set mouse=nvi
-else
-  set mouse=
-endif
-
 " Section: File Management and Directories
 " =============================================================================
 
@@ -94,6 +87,7 @@ set display=truncate
 set scrolloff=1
 set sidescrolloff=5
 set ruler
+set splitright
 set number
 set relativenumber
 set showcmd
@@ -126,7 +120,6 @@ set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
 set backspace=indent,eol,start
 set complete-=i
 set infercase
-set showmatch    " Especially useful for Lisp
 set virtualedit=block
 set shiftround
 set smarttab
@@ -260,14 +253,6 @@ endif
 
 " Section: Functions
 " =============================================================================
-
-function! ToggleQuickFix()
-  if empty(filter(getwininfo(), 'v:val.quickfix'))
-    copen
-  else
-    cclose
-  endif
-endfunction
 
 function! StripTrailingWhitespace()
   let l:save = winsaveview()
@@ -492,7 +477,7 @@ function! s:NixDevelopShell(target)
   let l:target = empty(a:target) ? '.' : a:target
 
   if has('nvim')
-    split
+    vsplit
     execute 'terminal nix develop ' . l:target
     startinsert
   elseif has('terminal')
