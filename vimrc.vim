@@ -141,6 +141,9 @@ endif
 nnoremap <C-J> <C-w>w
 nnoremap <C-K> <C-w>W
 
+" Easy expansion of current directory
+cnoremap <expr> %% getcmdtype () == ':' ? expand('%:h').'/' : "%%"
+
 " Section: Leader Mappings
 " =============================================================================
 
