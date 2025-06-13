@@ -163,6 +163,8 @@ nnoremap <leader>fb :buffer *
 nnoremap <leader>fB :sbuffer *
 nnoremap [b :bprevious<CR>
 nnoremap ]b :bnext<CR>
+nnoremap [B :bfirst
+nnoremap ]B :blast
 nnoremap <leader>bd :bdelete<CR>
 
 " Search operations
@@ -308,9 +310,6 @@ augroup vimrc
   " Strip trailing whitespace on save
   autocmd BufWritePre *.py,*.js,*.ts,*.lua,*.nix,*.md,*.txt
     \ call StripTrailingWhitespace()
-
-  " Buffer behavior
-  autocmd FileType help,qf nnoremap <buffer> q :q<CR>
 
   " Smart commenting (basic version)
   autocmd FileType vim setlocal commentstring=\"\ %s
