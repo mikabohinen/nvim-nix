@@ -74,12 +74,6 @@ set tags=./tags;
 " Clear search highlighting
 nnoremap <silent> <Esc><Esc> :nohlsearch<CR>
 
-" Keep search centered
-nnoremap n nzzzv
-nnoremap N Nzzzv
-nnoremap * *zzzv
-nnoremap # #zzzv
-
 " Section: Display and Interface
 " =============================================================================
 
