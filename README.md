@@ -1,6 +1,6 @@
 # nvim-nix
 
-An opinionated, minimalist, and distraction free Neovim environment that just works.
+An opinionated, principled, and distraction free Neovim environment that just works.
 
 This is my personal Neovim configuration. I'm sharing it not because I think
 everyone should use it exactly as-is, but because I've spent a lot of time
@@ -77,9 +77,9 @@ vanilla Vim fundamentally cannot. This experience has led me to develop
 my own philosophy about how to use (Neo)vim:
 
 It is my opinion that mastery is more important in the long run than short term
-productivity and convenience. This config therefore follows a minimalist
+productivity and convenience. This config therefore follows a principled
 approach with only the most essential plugins that build upon the philosophy of
-Vim itself. This minimalism builds upon a set of core principles:
+Vim itself. This builds upon a set of core principles:
 
 1. **Vim-first**: Given that Vim has remained highly relevant for over 30 years
    one must conclude that Vim has touched upon something more fundamental than
