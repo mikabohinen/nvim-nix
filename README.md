@@ -1,7 +1,7 @@
 # nvim-nix
 
-An principled, reproducible, and architecturally sound Neovim environment that
-just works.
+A principled, comprehensive, and reproducible Neovim environment that just
+works.
 
 This is my personal Neovim configuration. I'm sharing it not because I think
 everyone should use it exactly as-is, but because I've spent a lot of time
@@ -197,6 +197,10 @@ nix develop .#plugins
 ```
 
 ### Plugin selection criteria
+
+The goal isn't to use as few plugins as possible, it's to only use plugins that
+provide genuine capabilities rather than convenience wrappers around existing
+Vim functionality.
 
 A plugin is excluded if it does one or more of these things:
 
@@ -859,7 +863,17 @@ A: This config assumes intermediate Vim knowledge. For beginners, I'd recommend 
 A: Configuration options lead to complexity and compromise. A personal config can be opinionated and coherent. Fork it and make it yours rather than trying to make one config work for everyone.
 
 **Q: I need IDE features like auto-completion and file trees**
-A: That's perfectly valid! Fork this and add what you need, or consider LazyVim/AstroNvim if you want those features out of the box. This config is deliberately minimal. For auto-completion specifically, you could add nvim-cmp or just use Vim's built-in `<C-x><C-o>` and `<C-n>/<C-p>`.
+A: That's perfectly valid! Fork this and add what you need, or consider
+LazyVim/AstroNvim if you want those features out of the box. This config is
+deliberately minimal. For auto-completion specifically, you could add nvim-cmp
+or just use Vim's built-in `<C-x><C-o>` and `<C-n>/<C-p>`.
+
+**Q: Why call this "principled" instead of "minimal"?**
+A: Because it's not minimal, it's a comprehensive development environment with
+language servers, formatters, desktop integration, and 500+ lines of
+configuration. The low plugin count isn't about minimalism, it's about
+recognizing that Vim already does most things people install plugins for. I'd
+rather learn `:find **/*` once than configure a fuzzy finder on every machine.
 
 ## Migrating From Other Configs
 
