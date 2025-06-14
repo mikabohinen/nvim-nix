@@ -9,14 +9,43 @@ thinking through the principles behind editor configuration, and I think the
 approach might be useful to others.
 
 The basic idea is this: most modern Neovim configs try to turn your editor into
-an IDE by adding dozens of plugins and abstractions. I went the opposite
-direction. Every decision follows explicit principles.
+an all-purpose IDE by adding dozens of plugins and abstractions. There is no
+grander plan behind it than the fact that it needs to appeal to as many people
+as possible. In this config I do the opposite. Everything needs to justify
+its existence against the philosophy I have outlined below.
 
-If you like the philosophy here, you should fork this repository and
-adapt it to your own needs. Remove the Lisp stuff if you don't write Lisp. Add
-Rust support if that's what you do. The point isn't that my exact setup is
-perfect for you, but that the systematic approach to making these decisions
-might be helpful.
+If you like this approach, you should fork this repository and adapt it to your
+own needs. Remove the Lisp stuff if you don't write Lisp. Add Rust support if
+that's what you do. The point isn't that my exact setup is perfect for you, but
+that the systematic approach to making these decisions might be helpful.
+
+## Principled vs. Minimalist
+
+There is another point I need to clarify. Although this might look like a
+minimal config given how few plugins are present this is a misunderstanding. The
+vimrc alone is more than 500+ lines of code, and add on to that comprehensive
+Nix infrastructure, language servers/formatters/linters, cross platform modules,
+and desktop integration, and what you get is far from anything minimal.
+
+This is a full-featured development environment. I just happen to think most
+plugins are solving problems that don't actually exist.
+
+Every plugin I use needs to provide capabilities that align closely with the
+Vim philosophy and also provide capabilities that Vim doesn't already have. This
+is why, for example, I have chosen not to include things like fuzzy finders or
+auto formatters. Vim already has perfectly good solutions for how to handle this,
+namely using `:find **/*` or `:black %`. These things force me to understand my
+environment whereas automated tooling would make me more productive, but hamper
+my learning. As a mathematician I value deep understanding above all else, even
+if that comes at the expense of some convenience and productivity.
+
+The complexity is in the architecture, not the plugin count. The Nix
+infrastructure ensures this works identically everywhere, the vimrc is
+extensively documented and organized, and the whole thing boots in 36ms despite
+being feature-complete.
+
+So no, this isn't minimal. It's opinionated about what belongs in an editor and
+what belongs in your terminal.
 
 ## Features
 
