@@ -1,6 +1,7 @@
 # nvim-nix
 
-An opinionated, principled, and distraction free Neovim environment that just works.
+An principled, reproducible, and architecturally sound Neovim environment that
+just works.
 
 This is my personal Neovim configuration. I'm sharing it not because I think
 everyone should use it exactly as-is, but because I've spent a lot of time
@@ -9,9 +10,7 @@ approach might be useful to others.
 
 The basic idea is this: most modern Neovim configs try to turn your editor into
 an IDE by adding dozens of plugins and abstractions. I went the opposite
-direction. I use only 8 plugins, all of which enhance Vim's existing
-capabilities rather than replacing them. Everything is built with Nix for
-perfect reproducibility.
+direction. Every decision follows explicit principles.
 
 If you like the philosophy here, you should fork this repository and
 adapt it to your own needs. Remove the Lisp stuff if you don't write Lisp. Add
@@ -21,10 +20,9 @@ might be helpful.
 
 ## Features
 
-- **Minimal**: Only 8 plugins for maximum performance and focus
+- **Principled**: Every decision documented and reasoned through
 - **Reproducible**: Exact same setup on any machine with Nix
 - **Fast**: ~36ms startup time vs 200ms+ for typical modern configs
-- **Principled**: Every decision documented and reasoned through
 
 ## Prerequisites
 
