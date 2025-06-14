@@ -865,8 +865,8 @@ A: Configuration options lead to complexity and compromise. A personal config ca
 **Q: I need IDE features like auto-completion and file trees**
 A: That's perfectly valid! Fork this and add what you need, or consider
 LazyVim/AstroNvim if you want those features out of the box. This config is
-deliberately minimal. For auto-completion specifically, you could add nvim-cmp
-or just use Vim's built-in `<C-x><C-o>` and `<C-n>/<C-p>`.
+deliberately minimal. For auto-completion specifically, I recommend learning
+Vim's built-in autocompletion system like `<C-x><C-o>` and `<C-n>/<C-p>`.
 
 **Q: Why call this "principled" instead of "minimal"?**
 A: Because it's not minimal, it's a comprehensive development environment with

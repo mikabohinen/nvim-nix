@@ -138,6 +138,10 @@ nnoremap <C-K> <C-w>W
 " Easy expansion of current directory
 cnoremap <expr> %% getcmdtype () == ':' ? expand('%:h').'/' : "%%"
 
+" Fix the & mapping
+nnoremap & :&&<CR>
+xnoremap & :&&<CR>
+
 " Section: Leader Mappings
 " =============================================================================
 
