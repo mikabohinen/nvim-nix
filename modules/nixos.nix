@@ -16,7 +16,8 @@ let
   inherit (nvimPackages) languageServers formatters extraTools;
 
   desktop = import ../lib/desktop.nix { pkgs = nvimPkgs; inherit lib; };
-in {
+in
+{
   options.programs.nvimNix = {
     enable = mkEnableOption "Enable minimal neovim distribution";
 
@@ -61,7 +62,7 @@ in {
     };
 
     terminalEmulator = mkOption {
-      type = types.enum (["auto"] ++ builtins.attrNames desktop.terminalEmulators);
+      type = types.enum ([ "auto" ] ++ builtins.attrNames desktop.terminalEmulators);
       default = "auto";
       description = ''
         Terminal emulator to use for desktop entries.
@@ -91,7 +92,7 @@ in {
       terminalPackage =
         if cfg.installTerminalEmulator && cfg.terminalEmulator != "auto"
         then [ (desktop.getTerminalPackage cfg.terminalEmulator) ]
-        else [];
+        else [ ];
 
       guiWrapper = optional cfg.createGuiWrapper
         (desktop.makeTerminalWrapper {
@@ -103,22 +104,25 @@ in {
         if cfg.terminalEmulator != "auto"
         then cfg.terminalEmulator
         else if config.services.xserver.desktopManager.gnome.enable
-             then "gnome-terminal"
+        then "gnome-terminal"
         else if config.services.xserver.desktopManager.plasma5.enable ||
-                config.services.xserver.desktopManager.plasma6.enable
-             then "konsole"
+          config.services.xserver.desktopManager.plasma6.enable
+        then "konsole"
         else "auto";
 
       desktopEntries =
         if cfg.enableDesktopEntry
-        then desktop.makeDesktopEntries {
-          terminalEmulator = desktopTerminal;
-          availablePackages = config.environment.systemPackages;
-          nvimPackage = cfg.package;
-          createVariants = true;
-        }
-        else {};
-    in {
+        then
+          desktop.makeDesktopEntries
+            {
+              terminalEmulator = desktopTerminal;
+              availablePackages = config.environment.systemPackages;
+              nvimPackage = cfg.package;
+              createVariants = true;
+            }
+        else { };
+    in
+    {
       environment.systemPackages = basePackages ++ terminalPackage ++ guiWrapper;
 
       environment.variables = mkIf cfg.defaultEditor {
@@ -126,54 +130,60 @@ in {
         VISUAL = "nvim";
       };
 
-      # Add shell aliases system-wide
       environment.shellAliases = cfg.shellAliases;
 
-      # Configure git to use nvim
-      environment.etc."gitconfig" = mkIf (cfg.defaultEditor && cfg.enableGitIntegration) {
-        text = ''
-          [core]
-            editor = nvim
-          [merge]
-            tool = nvim
-          [mergetool "nvim"]
-            cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
-          [diff]
-            tool = nvim
-          [difftool "nvim"]
-            cmd = nvim -d $LOCAL $REMOTE
-        '';
-      };
+      environment.etc = mkMerge [
+        # Git configuration
+        (mkIf (cfg.defaultEditor && cfg.enableGitIntegration) {
+          "gitconfig" = {
+            text = ''
+              [core]
+                editor = nvim
+              [merge]
+                tool = nvim
+              [mergetool "nvim"]
+                cmd = nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+              [diff]
+                tool = nvim
+              [difftool "nvim"]
+                cmd = nvim -d $LOCAL $REMOTE
+            '';
+          };
+        })
 
-      # Ensure git is available if we're configuring it
-      programs.git.enable = mkIf cfg.enableGitIntegration (mkDefault true);
-
-      # Create desktop entries for GUI integration
-      environment.etc = mkIf cfg.enableDesktopEntry (
-        mapAttrs' (name: entry: {
-          name = "xdg/applications/nvim-${name}.desktop";
-          value.text = generators.toINI {} {
-            "Desktop Entry" = {
-              Type = "Application";
-              Name = entry.desktopName;
-              GenericName = entry.genericName or "";
-              Comment = entry.comment or "";
-              Exec = entry.exec;
-              Icon = entry.icon or "";
-              Terminal = entry.terminal or false;
-              Categories = concatStringsSep ";" (entry.categories or []);
-              MimeType = concatStringsSep ";" (entry.mimeType or []);
-              Keywords = concatStringsSep ";" (entry.keywords or []);
-              StartupNotify = entry.startupNotify or false;
-              NoDisplay = entry.noDisplay or false;
-            };
-          } // (mapAttrs (actionName: actionConfig: {
-            "Desktop Action ${actionName}" = {
-              Name = actionConfig.name;
-              Exec = actionConfig.exec;
-            };
-          }) (entry.actions or {}));
-        }) desktopEntries );
+        # Desktop entries
+        (mkIf cfg.enableDesktopEntry (
+          mapAttrs'
+            (name: entry: {
+              name = "xdg/applications/nvim-${name}.desktop";
+              value.text = generators.toINI { }
+                {
+                  "Desktop Entry" = {
+                    Type = "Application";
+                    Name = entry.desktopName;
+                    GenericName = entry.genericName or "";
+                    Comment = entry.comment or "";
+                    Exec = entry.exec;
+                    Icon = entry.icon or "";
+                    Terminal = entry.terminal or false;
+                    Categories = concatStringsSep ";" (entry.categories or [ ]);
+                    MimeType = concatStringsSep ";" (entry.mimeType or [ ]);
+                    Keywords = concatStringsSep ";" (entry.keywords or [ ]);
+                    StartupNotify = entry.startupNotify or false;
+                    NoDisplay = entry.noDisplay or false;
+                  };
+                } // (mapAttrs
+                (actionName: actionConfig: {
+                  "Desktop Action ${actionName}" = {
+                    Name = actionConfig.name;
+                    Exec = actionConfig.exec;
+                  };
+                })
+                (entry.actions or { }));
+            })
+            desktopEntries
+        ))
+      ];
     }
   );
 }

@@ -2,76 +2,84 @@
 
 An opinionated, minimalist, and distraction free Neovim environment that just works.
 
+This is my personal Neovim configuration. I'm sharing it not because I think
+everyone should use it exactly as-is, but because I've spent a lot of time
+thinking through the principles behind editor configuration, and I think the
+approach might be useful to others.
+
+The basic idea is this: most modern Neovim configs try to turn your editor into
+an IDE by adding dozens of plugins and abstractions. I went the opposite
+direction. I use only 8 plugins, all of which enhance Vim's existing
+capabilities rather than replacing them. Everything is built with Nix for
+perfect reproducibility.
+
+If you like the philosophy here, you should fork this repository and
+adapt it to your own needs. Remove the Lisp stuff if you don't write Lisp. Add
+Rust support if that's what you do. The point isn't that my exact setup is
+perfect for you, but that the systematic approach to making these decisions
+might be helpful.
+
 ## Features
 
-- 🔧 **Minimal**: Only 8 plugins for maximum performance and focus
-- ⚡ **Just Works**: Reproducible setup with zero configuration on any machine with Nix
+- **Minimal**: Only 8 plugins for maximum performance and focus
+- **Reproducible**: Exact same setup on any machine with Nix
+- **Fast**: ~36ms startup time vs 200ms+ for typical modern configs
+- **Principled**: Every decision documented and reasoned through
+
+## Prerequisites
+
+You'll need a few things before getting started:
+
+**Nix with flakes enabled**:
+```bash
+# Add to ~/.config/nix/nix.conf or /etc/nix/nix.conf
+experimental-features = nix-command flakes
+```
+
+**Basic Vim knowledge**: This config assumes you know Vim fundamentals. If
+you're new to Vim, spend some time with vanilla Vim first to learn the core
+concepts.
+
+**Git**: For version control integration and cloning the repository.
 
 ## Quick Start
 
+If you want to try this before committing to anything:
+
 ```bash
-# Try it immediately (full development environment)
+# Full development environment
 nix run github:mikabohinen/nvim-nix#dev
 
-# Just the editor (minimal)
+# Just the editor
 nix run github:mikabohinen/nvim-nix#neovim
 
 # Development shell with all tools
 nix develop github:mikabohinen/nvim-nix
 ```
 
-## Installation
-
-### Home Manager
-
-Add to your `home.nix`:
-
-```nix
-{
-  inputs.nvim-nix.url = "github:mikabohinen/nvim-nix";
-
-  # In your home configuration:
-  imports = [ inputs.nvim-nix.homeManagerModules.default ];
-
-  programs.nvimNix = {
-    enable = true;
-    enableDevTools = true; # Install formatters, linters, etc.
-  };
-}
-```
-
-### NixOS System-wide
-
-Add to your `configuration.nix`:
-
-```nix
-{
-  inputs.nvim-nix.url = "github:mikabohinen/nvim-nix";
-
-  # In your system configuration:
-  imports = [ inputs.nvim-nix.nixosModules.default ];
-
-  programs.nvimNix = {
-    enable = true;
-    defaultEditor = true;
-    enableDevTools = true;
-  };
-}
-```
-
-### Package Variants
-
-- **`#neovim`**: Minimal editor with LSP support only
-- **`#default`**: Full editor with all development tools
-- **`#dev`**: App launcher with proper PATH for all tools
-- **`#dev-tools`**: Just the development tools (formatters, linters, etc.)
-
 ## Philosophy
 
-It is our opinion that mastery is more important in the long run than short
-term productivity and convenience. We therefore follow a minimalist approach
-with only the most essential plugins that build upon the philosophy of Vim itself.
-This minimalism builds upon a set of core principles:
+I have spent countless hours configuring (Neo)vim (often when I should have
+been doing other more important things like studying or working). I started out
+by writing a bloated vimrc with all plugins imaginable. Then I went over to
+Neovim and Lua where I spent some time distro hopping between LazyVim, NvChad,
+LunarVim, etc. Then I decided to write my own Lua config from scratch which
+slowly turned into a hot mess of 100+ plugins which was supposed to accomplish
+everything, but in reality made me spend most of my time reading documentation
+for various plugins rather than getting any actual work done. I then went the
+pure minimalist route and wrote my master's thesis using only vanilla vim.
+The clarity of thought I gained from not having to fight my plugins all the
+time meant I could focus 100% on writing my thesis instead of trying to understand
+why my autocompletion mappings were not working the way I wanted them too. It
+also made me realize that Vim is exceptionally capable on its own. However,
+I also realized that there are a few things modern plugins provide that
+vanilla Vim fundamentally cannot. This experience has led me to develop
+my own philosophy about how to use (Neo)vim:
+
+It is my opinion that mastery is more important in the long run than short term
+productivity and convenience. This config therefore follows a minimalist
+approach with only the most essential plugins that build upon the philosophy of
+Vim itself. This minimalism builds upon a set of core principles:
 
 1. **Vim-first**: Given that Vim has remained highly relevant for over 30 years
    one must conclude that Vim has touched upon something more fundamental than
@@ -100,12 +108,12 @@ This minimalism builds upon a set of core principles:
    workflows while still having a good understanding of what is happening at
    the more granular level.
 
-These principles inform our choice of plugins.
-
+These principles inform the choice of plugins.
 
 ## Plugin List
 
-See [selection criteria](#Plugin-selection-criteria) for the exact details of why these specific plugins are acceptable.
+See [selection criteria](#Plugin-selection-criteria) for the exact details of
+why these specific plugins are acceptable.
 
 **Modern Necessities** (what vimscript can't handle well):
 
@@ -163,7 +171,7 @@ nix develop .#plugins
 
 ### Plugin selection criteria
 
-We exclude a plugin if it does one or more of these things:
+A plugin is excluded if it does one or more of these things:
 
 1. Hides complexity you should understand
 2. Replaces learning with convenience
@@ -179,7 +187,6 @@ it if and only if it also satisfies the following criteria:
 3. Builds upon Vim's philosophy
 4. Reinforces good practices
 
-
 #### Examples of excluded plugins
 
 - **Fuzzy finders**: :find \*\*/\* is sufficient, and using :grep together with the quickfix list is better
@@ -188,76 +195,298 @@ it if and only if it also satisfies the following criteria:
 - **Comment automation**: manual commenting teaches language syntax
 - **Session managers**: :mksession covers 80% of use cases
 
+## Architecture
+
+### Three-Layer Approach
+
+nvim-nix employs a three-layer architecture that leverages the strengths of
+Nix, Vimscript, and Lua respectively. Each language does what it is good at and
+no more:
+
+#### Nix Layer (Infrastructure)
+
+*"What should exist"*
+
+- **Declarative Environment**: Packages, plugins, language servers, formatters
+- **Reproducible Systems**: Identical setups across machines and time
+- **Integration Logic**: Desktop entries, terminal detection, system configuration
+- **Dependency Management**: All external tools with exact versions
+
+```nix
+# Nix handles: "Make these tools available"
+languageServers = [ pkgs.pyright pkgs.rust-analyzer ];
+plugins = [ vim-surround vim-fugitive ];
+```
+
+#### Vimscript Layer (Behavior)
+
+*"How should Vim behave"*
+
+- **Core Workflow**: Traditional Vim commands, mappings, patterns
+- **User Interface**: Status line, quickfix integration, helper functions
+- **Command Definitions**: All :commands and <leader> mappings
+- **Editor Behavior**: Settings, autocommands, traditional vim features
+
+```vim
+" Vimscript handles: "How should the editor behave"
+nnoremap <leader>fw :grep "" .<Left><Left><Left>
+command! StripWhitespace call StripTrailingWhitespace()
+```
+
+#### Lua Layer (Modern Features)
+
+*"How should modern features work"*
+
+- **LSP Configuration**: Language server setup, capabilities, handlers
+- **Dynamic Behavior**: Buffer-local keymaps that activate in response to LSP events
+- **Modern APIs**: Diagnostic configuration, treesitter, floating windows
+- **Event-Driven**: Autocommands that respond to LSP attachment
+
+```lua
+-- Lua handles: "How should modern features integrate"
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(event)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {buffer = event.buf})
+  end,
+})
+```
+
+#### Clean Boundaries
+
+Each layer has clear responsibilities and interfaces:
+
+- **Nix → Lua**: Provides tools and generates configuration
+- **Lua → Vimscript**: Calls vim commands and integrates with existing patterns
+- **No layer bypassing**: Each respects the others' domains
+
+This architecture ensures that adding a language server happens in Nix,
+defining key-mappings happens in Vimscript (with the exception of LSP
+bindings), configuring LSP behavior happens in Lua. Each language does what it
+is meant to do.
+
+### File Structure
+
+- `flake.nix` - Flake inputs/outputs with clean organization
+- `plugins.nix` - Declarative plugin definitions with exact versions
+- `lib/languages.nix` - Language support definitions
+- `lib/plugin-management.nix` - Nix plugin utilities
+- `lib/desktop.nix` - Desktop integration utilities
+- `modules/` - Home Manager and NixOS integration modules
+- `vimrc.vim` - Core vim configuration following traditional patterns
+
+### Plugin Architecture
+
+```
+Plugins (8 total)
+├── Local Plugins (5) - plugins.nix
+│   ├── vim-surround
+│   ├── vim-vinegar
+│   ├── vim-repeat
+│   ├── vim-fugitive
+│   └── vim-sexp
+└── Nixpkgs Plugins (3) - default.nix
+    ├── nvim-lspconfig
+    ├── nvim-treesitter
+    └── nvim-treesitter-textobjects
+```
+
 ## Supported Languages
 
 Each language includes appropriate tooling based on ecosystem maturity:
 
-- **Bash** - LSP (bashls), treesitter, formatter (shfmt)
-- **Haskell** - LSP (hls), treesitter, formatter (fourmolu)
-- **Java** - LSP (jdtls), treesitter, formatter (google-java-format)
-- **Common Lisp** - treesitter, structural editing
-- **Markdown** - treesitter, formatter (prettier)
-- **Nix** - LSP (nixd), treesitter, formatter (nixpkgs-fmt)
-- **LaTeX** - LSP (texlab), treesitter
-- **Lua** - treesitter, formatter (stylua)
-- **Python** - LSP (pyright), treesitter, formatter (black)
+| Language        | LSP     | Treesitter   | Formatter          | Notes |
+| --------------- | ------- | ------------ | ------------------ | ------- |
+| **Bash**        | bashls  | ✓            | shfmt              | Full shell scripting support |
+| **Haskell**     | hls     | ✓            | fourmolu           | Complete functional programming |
+| **Java**        | jdtls   | ✓            | google-java-format | Enterprise development |
+| **Common Lisp** | —       | ✓            | —                  | Structural editing with vim-sexp |
+| **Markdown**    | —       | ✓            | prettier           | Documentation writing |
+| **Nix**         | nixd    | ✓            | nixpkgs-fmt        | First-class Nix support |
+| **LaTeX**       | texlab  | ✓            | —                  | Academic writing |
+| **Lua**         | —       | ✓            | stylua             | Neovim configuration |
+| **Python**      | pyright | ✓            | black              | Modern Python development |
+
+## Installation
+
+This assumes you're using Nix flakes.
+
+### Home Manager
+
+Add to your `flake.nix`:
+
+```nix
+{
+  description = "Your home configuration";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nvim-nix = {
+      url = "github:mikabohinen/nvim-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { nixpkgs, home-manager, nvim-nix, ... }: {
+    homeConfigurations.yourusername = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux; # or your system
+      modules = [
+        nvim-nix.homeManagerModules.default
+        {
+          programs.nvimNix = {
+            enable = true;
+            enableDevTools = true; # Install formatters, linters, etc.
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+Or if you already have a `home.nix`, add this to your existing configuration:
+
+```nix
+# In your home.nix or home-manager module
+{
+  imports = [ inputs.nvim-nix.homeManagerModules.default ];
+
+  programs.nvimNix = {
+    enable = true;
+    enableDevTools = true;
+  };
+}
+```
+
+### NixOS System-wide
+
+Add to your `flake.nix`:
+
+```nix
+{
+  description = "Your NixOS configuration";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nvim-nix = {
+      url = "github:mikabohinen/nvim-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { nixpkgs, nvim-nix, ... }: {
+    nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux"; # or your system
+      modules = [
+        nvim-nix.nixosModules.default
+        {
+          programs.nvimNix = {
+            enable = true;
+            defaultEditor = true;
+            enableDevTools = true;
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+Or if you already have a `configuration.nix`, add this to your existing configuration:
+
+```nix
+# In your configuration.nix or NixOS module
+{
+  imports = [ inputs.nvim-nix.nixosModules.default ];
+
+  programs.nvimNix = {
+    enable = true;
+    defaultEditor = true;
+    enableDevTools = true;
+  };
+}
+```
+
+### Package Variants
+
+- **`#neovim`**: Minimal editor with LSP support only
+- **`#default`**: Full editor with all development tools
+- **`#dev`**: App launcher with proper PATH for all tools
+- **`#dev-tools`**: Just the development tools (formatters, linters, etc.)
 
 ## Key Bindings
 
-### Philosophy: Consistent Patterns
+My key bindings follow consistent patterns to make them easier to remember and
+use. Rather than scattering related functions across random key combinations, I
+group them logically.
 
-Key bindings follow functional grouping:
-
-- **`<leader>f*`**: All "finding" operations (files, buffers, search)
-- **`<leader>g*`**: Git operations
-- **`<leader>c*`**: Code operations (LSP, diagnostics, formatting)
-- **`<leader>cd*`**: Code diagnostic operations
-- **`<leader>n*`**: Nix development workflow
-- **`<leader>w*`**: Workspace management (LSP)
-- **Navigation**: Native vim patterns (`]b`, `[q`, etc.)
-
-### Core Finding Operations
+### Core Patterns
 
 **Leader key**: `<Space>` for global operations
 **Local leader**: `,` for filetype-specific operations
 
-```vim
-" File finding (vim native)
-<leader><leader>  " :find *
-<leader>ff        " :find * (same as above)
-<leader>fF        " :find **/* (recursive)
+All bindings follow functional grouping:
+- `<leader>f*`: All "finding" operations (files, buffers, search)
+- `<leader>g*`: Git operations
+- `<leader>c*`: Code operations (LSP, diagnostics, formatting)
+- `<leader>cd*`: Code diagnostic operations specifically
+- `<leader>n*`: Nix development workflow
+- `<leader>w*`: Workspace management (LSP)
 
-" Buffer operations
+This way, once you remember that `f` means "find", you can guess that
+`<leader>fw` probably searches the workspace, `<leader>ff` finds files, etc.
+
+### Finding and Navigation
+
+The core of any editor workflow is finding things quickly. Vim's built-in tools
+are powerful once you learn them:
+
+```vim
+" File finding (vim native - teaches you about path and wildcards)
+<leader><leader>  " :find * (quick access)
+<leader>ff        " :find * (explicit)
+<leader>fF        " :find **/* (recursive search)
+
+" Buffer operations (work with vim's buffer model)
 <leader>fb       " :buffer * (find and open)
 <leader>fB       " :sbuffer * (find and split)
-[b / ]b          " Previous/next buffer
+[b / ]b          " Previous/next buffer (follows vim's ][ pattern)
 <leader>bd       " Delete buffer
 
-" Search operations
+" Search operations (builds on grep/vimgrep)
 <leader>fw       " :grep "" . (project-wide search)
 <leader>fW       " :vimgrep // **/* (vim's internal search)
 <leader>fs       " :lgrep "" . (location list search)
 <leader>fS       " :lvimgrep // **/* (location list vim search)
 ```
 
-### Navigation & Lists
+The point here is that you're learning transferable skills. `:find` works on
+any Vim installation. Understanding the difference between quickfix and
+location lists helps you on any system.
+
+### Lists and Navigation
+
+Vim's list management is incredibly powerful once you understand it:
 
 ```vim
-" Quickfix & Location Lists
+" Quickfix & Location Lists (core vim navigation)
 <leader>q / <leader>Q   " Open/close quickfix
 <leader>l / <leader>L   " Open/close location list
-]q / [q                 " Next/previous quickfix
+]q / [q                 " Next/previous quickfix (vim's standard pattern)
 ]l / [l                 " Next/previous location list
 
-" Window movement
+" Window movement (simplified from default C-w commands)
 <C-J>                   " Move to next window
 <C-K>                   " Move to previous window
 ```
 
-### Search & Navigation
+### Enhanced Search
 
 ```vim
-" Enhanced search patterns (very magic mode)
+" Enhanced search patterns (very magic mode makes regex more predictable)
 <leader>/        " Search with \v (very magic)
 <leader>?        " Reverse search with \v (very magic)
 
@@ -267,11 +496,12 @@ n / N            " Next/previous search (auto-centered)
 * / #            " Search word under cursor (auto-centered)
 ```
 
-### LSP & Diagnostics
+### LSP and Modern Features
 
-**Core LSP navigation** (buffer-local, only when LSP is attached):
+These mappings only activate when LSP is attached to a buffer, so they don't interfere with regular Vim usage:
 
 ```vim
+" Core LSP navigation (buffer-local, only when LSP is attached)
 gd               " Go to definition
 gr               " Go to references
 gi               " Go to implementation
@@ -283,14 +513,14 @@ K                " Hover documentation
 <leader>ck       " Signature help
 ```
 
-**Diagnostic navigation** (buffer-local, following `]q`/`[q` pattern):
+**Diagnostic navigation** follows vim's `]q`/`[q` pattern for consistency:
 
 ```vim
 ]d / [d          " Next/previous diagnostic
 ]D / [D          " Next/previous error (skips warnings)
 ```
 
-**Diagnostic operations** (organized under `<leader>cd` for "code diagnostic"):
+**Diagnostic operations** are grouped under `<leader>cd` for "code diagnostic":
 
 ```vim
 <leader>cdf      " Show diagnostic float (quick peek, auto-closes)
@@ -318,7 +548,7 @@ K                " Hover documentation
 
 ### Treesitter Features
 
-**Text objects** (work with operators like `d`, `y`, `c`):
+**Text objects** work with operators like `d`, `y`, `c`:
 
 ```vim
 af / if          " Around/inside function
@@ -327,7 +557,7 @@ al / il          " Around/inside loop
 aa / ia          " Around/inside parameter
 ```
 
-**Movement**:
+**Movement** follows vim's `][` convention:
 
 ```vim
 ]f / [f          " Next/previous function start
@@ -347,9 +577,10 @@ grm              " Decrement selection
 
 ### Nix Development Workflow
 
-**Global Nix operations** (available everywhere):
+Since this config is built with Nix, I've integrated Nix commands directly:
 
 ```vim
+" Global Nix operations (available everywhere)
 <leader>nr       " :NixRun (with prompt)
 <leader>nb       " :NixBuild (with prompt)
 <leader>ns       " Enter nix develop shell
@@ -365,7 +596,7 @@ grm              " Decrement selection
 <leader>ed       " Edit default.nix
 ```
 
-**Nix file-specific mappings** (in .nix files):
+**Nix file-specific mappings** (in .nix files only):
 
 ```vim
 <localleader>r   " Run current flake
@@ -378,8 +609,9 @@ grm              " Decrement selection
 
 ### Lisp Development
 
+For Lisp, I use a terminal-based REPL workflow rather than trying to integrate everything into the editor:
+
 ```vim
-" Terminal-based REPL workflow
 :terminal sbcl    " Start SBCL in terminal split
 :terminal         " General terminal (customize as needed)
 
@@ -457,6 +689,26 @@ ci(              " Change inside s-expression
 :DiagnosticsToggleVirtualText  " Toggle inline diagnostic text
 :LspRestart                    " Restart LSP client
 :LspInfo                       " Show LSP client information
+```
+
+## Performance
+
+On my machine (Intel i7-1355U, 16GB RAM, NixOS with btrfs), this starts up in
+about 36ms. Part of that is having fewer plugins, but part of it is also
+that everything is compiled ahead of time with Nix rather than being installed
+and configured at runtime.
+
+You can benchmark this yourself with:
+
+```bash
+# Install hyperfine for benchmarking
+nix shell nixpkgs#hyperfine
+
+# Test startup times
+hyperfine --warmup 3 --runs 10 'nvim --headless +q'
+
+# Compare with other configs if you have them
+hyperfine 'nvim --headless +q' 'lazyvim --headless +q'
 ```
 
 ## Module Configuration
@@ -557,174 +809,107 @@ nix-prefetch-github tpope vim-surround
 nix build .#neovim
 ```
 
-## Architecture
+## FAQ
 
-### Three-Layer Approach
+**Q: Why only 8 plugins when my current config has 50+?**
+A: I prioritize learning Vim's native capabilities over convenience features.
+Each plugin must provide capabilities Vim lacks entirely. More plugins often
+means more complexity and less understanding of what's actually happening.
 
-nvim-nix employs a three-layer architecture that leverages the strengths of
-Nix, Vimscript, and Lua respectively. Each language does what it is good at and
-no more:
+**Q: No fuzzy finder? How do I find files quickly?**
+A: Use `:find **/*` with tab completion, or `:grep` with quickfix lists. These
+teach you transferable skills that work on any Vim installation. Once you learn
+the patterns, they're often faster than fuzzy finders anyway. And if you really
+need a fuzzy finder then just use it in the terminal.
 
-#### Nix Layer (Infrastructure)
+**Q: Can I add my favorite plugin X?**
+A: If you fork this (which you should), absolutely. Check the [plugin selection criteria](#plugin-selection-criteria) to think through the trade-offs. If it violates none of the exclusion rules and meets all inclusion criteria, it might be worth considering.
 
-*"What should exist"*
+**Q: Is this suitable for beginners?**
+A: This config assumes intermediate Vim knowledge. For beginners, I'd recommend starting with vanilla Vim/Neovim to learn fundamentals first. This config is about mastery, not getting started.
 
-- **Declarative Environment**: Packages, plugins, language servers, formatters
-- **Reproducible Systems**: Identical setups across machines and time
-- **Integration Logic**: Desktop entries, terminal detection, system configuration
-- **Dependency Management**: All external tools with exact versions
+**Q: Why share a personal config instead of making it configurable?**
+A: Configuration options lead to complexity and compromise. A personal config can be opinionated and coherent. Fork it and make it yours rather than trying to make one config work for everyone.
 
-```nix
-# Nix handles: "Make these tools available"
-languageServers = [ pkgs.pyright pkgs.rust-analyzer ];
-plugins = [ vim-surround vim-fugitive ];
+**Q: I need IDE features like auto-completion and file trees**
+A: That's perfectly valid! Fork this and add what you need, or consider LazyVim/AstroNvim if you want those features out of the box. This config is deliberately minimal. For auto-completion specifically, you could add nvim-cmp or just use Vim's built-in `<C-x><C-o>` and `<C-n>/<C-p>`.
+
+## Migrating From Other Configs
+
+If you're coming from a more feature-rich config, expect some adjustment:
+
+**From LazyVim/AstroNvim/LunarVim**: You'll have fewer convenience features,
+but you'll learn more transferable skills. The trade-off is short-term
+productivity for long-term mastery.
+
+**Backup your current config first**:
+```bash
+mv ~/.config/nvim ~/.config/nvim.backup
+# Try nvim-nix for a week
+# Then decide what you actually need
 ```
 
-#### Vimscript Layer (Behavior)
-
-*"How should Vim behave"*
-
-- **Core Workflow**: Traditional Vim commands, mappings, patterns
-- **User Interface**: Status line, quickfix integration, helper functions
-- **Command Definitions**: All :commands and <leader> mappings
-- **Editor Behavior**: Settings, autocommands, traditional vim features
-
-```vim
-" Vimscript handles: "How should the editor behave"
-nnoremap <leader>fw :grep "" .<Left><Left><Left>
-command! StripWhitespace call StripTrailingWhitespace()
-```
-
-#### Lua Layer (Modern Features)
-
-*"How should modern features work"*
-
-- **LSP Configuration**: Language server setup, capabilities, handlers
-- **Dynamic Behavior**: Buffer-local keymaps that activate in response to LSP events
-- **Modern APIs**: Diagnostic configuration, treesitter, floating windows
-- **Event-Driven**: Autocommands that respond to LSP attachment
-
-```lua
--- Lua handles: "How should modern features integrate"
-vim.api.nvim_create_autocmd('LspAttach', {
-  callback = function(event)
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {buffer = event.buf})
-  end,
-})
-```
-
-#### Clean Boundaries
-
-Each layer has clear responsibilities and interfaces:
-
-- **Nix → Lua**: Provides tools and generates configuration
-- **Lua → Vimscript**: Calls vim commands and integrates with existing patterns
-- **No layer bypassing**: Each respects the others' domains
-
-This architecture ensures that adding a language server happens in Nix,
-defining key-mappings happens in Vimscript (with the exception of LSP
-bindings), configuring LSP behavior happens in Lua. Each language does what it
-is meant to do.
-
-### File Structure
-
-- `flake.nix` - Flake inputs/outputs with clean organization
-- `plugins.nix` - Declarative plugin definitions with exact versions
-- `lib/languages.nix` - Language support definitions
-- `lib/plugin-management.nix` - Nix plugin utilities
-- `lib/desktop.nix` - Desktop integration utilities
-- `modules/` - Home Manager and NixOS integration modules
-- `vimrc.vim` - Core vim configuration following traditional patterns
-
-### Plugin Architecture
-
-```
-Plugins (8 total)
-├── Local Plugins (5) - plugins.nix
-│   ├── vim-surround
-│   ├── vim-vinegar
-│   ├── vim-repeat
-│   ├── vim-fugitive
-│   └── vim-sexp
-└── Nixpkgs Plugins (3) - default.nix
-    ├── nvim-lspconfig
-    ├── nvim-treesitter
-    └── nvim-treesitter-textobjects
-```
+**Expect workflow changes**: Manual formatting instead of auto-formatters,
+native file finding instead of fuzzy finders, quickfix lists instead of fancy
+UIs.
 
 ## Troubleshooting
 
-### Formatters Not Available
+### Common Issues
 
-**Problem**: Commands like `:!black %` fail with "command not found"
+**"nix: command not found"**
+Install Nix: `curl -L https://nixos.org/nix/install | sh`
 
-**Solution**: You're using the minimal variant. Use one of:
-- `nix run github:mikabohinen/nvim-nix#dev` (app with tools)
-- Install via Home Manager/NixOS modules with `enableDevTools = true`
-- Use `nix develop` for development shell
+**"experimental features not enabled"**
+Enable flakes in nix.conf - see [Prerequisites](#prerequisites)
 
-### LSP Servers Not Found
+**LSP not working**
+Ensure you're using the full variant: `nix run .#dev` or enable `enableDevTools = true`
 
-**Problem**: LSP features not working
+**Formatters not available**
+You're probably using the minimal variant. Use `nix run .#dev` or install via modules with `enableDevTools = true`
 
-**Solution**: Ensure you're using the full package or have `enableDevTools = true` in modules
+**Terminal emulator not detected**
+Specify explicitly: `terminalEmulator = "kitty"` in your config
 
-### Custom Configuration
-
-Add custom config via Home Manager:
-
-```nix
-programs.nvimNix.extraConfig = ''
-  -- Custom Lua configuration
-  vim.opt.relativenumber = false
-  vim.keymap.set('n', '<leader>w', ':w<CR>')
-'';
-```
+**Performance issues**
+This config is optimized for speed. If you experience slowness:
+- Check for large files (>10MB) - Vim handles these differently
+- Network filesystems may affect file operations
+- Ensure you're not loading additional plugins
 
 ### Desktop Integration Issues
 
-**Problem**: Desktop entries not appearing or wrong terminal used
+**Desktop entries not appearing**
+Check that `enableDesktopEntry = true` and you have a desktop environment running
 
-**Solution**:
-```nix
-programs.nvimNix = {
-  enable = true;
-  terminalEmulator = "kitty";  # Force specific terminal
-  installTerminalEmulator = true;
-};
-```
+**Wrong terminal used**
+Force a specific terminal: `terminalEmulator = "kitty"` instead of "auto"
 
-Check available terminals:
+**Check available terminals**:
 ```bash
 nix eval .#lib.versionInfo.available-terminals
 ```
 
-### Plugin Management
+## Contributing
 
-**Problem**: Need to add, update, or remove plugins
+If you find bugs or think the documentation could be clearer, I'm happy to
+accept contributions. If you want to add features that don't fit with the
+existing philosophy, you should probably just fork the repository instead. The
+whole point is to keep this focused and opinionated rather than trying to make
+it work for everyone.
 
-**Solution**: Use built plugin tooling:
+**Welcome contributions:**
+- Bug fixes and typos
+- Documentation improvements
+- Architecture improvements that maintain philosophy
+- Performance optimizations
 
-```bash
-# List current plugins
-nix run .#plugins list
-
-# Check for updates
-nix run .#plugins check-updates
-
-# Get update instructions
-nix run .#plugins update-info
-```
-
-Add plugins by editing `plugins.nix`:
-```nix
-new-plugin = {
-  owner = "author";
-  repo = "plugin-name";
-  rev = "commit-hash";      # Get with nix-prefetch-github
-  sha256 = lib.fakeHash;    # Auto-computed
-};
-```
+**Please fork instead for:**
+- Additional plugins that violate selection criteria
+- UI/theme changes
+- Configuration options and customization features
+- Support for languages I don't use
 
 ## License
 
