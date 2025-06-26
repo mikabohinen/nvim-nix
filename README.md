@@ -34,7 +34,7 @@ Every plugin I use needs to provide capabilities that align closely with the
 Vim philosophy and also provide capabilities that Vim doesn't already have. This
 is why, for example, I have chosen not to include things like fuzzy finders or
 auto formatters. Vim already has perfectly good solutions for how to handle this,
-namely using `:find **/*` or `:black %`. These things force me to understand my
+namely using `:find **/*` or `:!black %`. These things force me to understand my
 environment whereas automated tooling would make me more productive, but hamper
 my learning. As a mathematician I value deep understanding above all else, even
 if that comes at the expense of some convenience and productivity.
