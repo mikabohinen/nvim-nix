@@ -1,7 +1,5 @@
 " vimrc.vim
 
-" Vim configuration following a minimalist philosophy
-
 " Section: Bootstrap and Environment Detection
 " =============================================================================
 
