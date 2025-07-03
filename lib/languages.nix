@@ -91,28 +91,30 @@
         package = pkgs.lua-language-server;
         serverName = "lua_ls";
         settings = {
-          Lua = {
-            runtime = {
-              version = "LuaJIT";
-            };
-            diagnostics = {
-              globals = [ "vim" ];
-            };
-            workspace = {
-              library = [
-                "\${3rd}/luv/library"
-                "\${3rd}/busted/library"
-              ];
-              checkThirdParty = false;
-            };
-            telemetry = {
-              enable = false;
-            };
-            format = {
-              enable = false;
-            };
-          };
+          Lua = {};
         };
+        onInit = ''
+          function(client)
+            if client.workspace_folders then
+              local path = client.workspace_folders[1].name
+              if path ~= vim.fn.stdpath('config') and (vim.loop.fs_stat(path..'/.luarc.json') or vim.loop.fs_stat(path..'/.luarc.jsonc')) then
+                return
+              end
+            end
+
+            client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+              runtime = { version = 'LuaJIT' },
+              workspace = {
+                checkThirdParty = false,
+                library = {
+                  vim.env.VIMRUNTIME,
+                  "''${3rd}/luv/library",
+                  "''${3rd}/busted/library",
+                }
+              }
+            })
+          end
+        '';
       };
       treesitter = "lua";
       formatter = {
@@ -159,9 +161,16 @@
   generateLspSetup = languages: builtins.concatStringsSep "\n" (
     builtins.map
       (name:
-        let lang = languages.${name}; in
-        if builtins.hasAttr "lsp" lang then
-          "lspconfig.${lang.lsp.serverName}.setup{}"
+        let
+          lang = languages.${name};
+          hasLsp = builtins.hasAttr "lsp" lang;
+          hasSettings = hasLsp && builtins.hasAttr "settings" lang.lsp;
+          hasOnInit = hasLsp && builtins.hasAttr "onInit" lang.lsp;
+          settingsJson = if hasSettings then builtins.toJSON lang.lsp.settings else "{}";
+          onInitPart = if hasOnInit then "on_init = ${lang.lsp.onInit}," else "";
+        in
+        if hasLsp then
+          "lspconfig.${lang.lsp.serverName}.setup({${onInitPart} settings = vim.fn.json_decode('${settingsJson}')})"
         else ""
       )
       (builtins.attrNames languages)
