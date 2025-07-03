@@ -1,6 +1,3 @@
-# default.nix
-# Main package definition for nvim-nix
-
 { pkgs, ... }:
 
 let

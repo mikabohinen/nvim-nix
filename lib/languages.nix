@@ -87,6 +87,33 @@
     };
 
     lua = {
+      lsp = {
+        package = pkgs.lua-language-server;
+        serverName = "lua_ls";
+        settings = {
+          Lua = {
+            runtime = {
+              version = "LuaJIT";
+            };
+            diagnostics = {
+              globals = [ "vim" ];
+            };
+            workspace = {
+              library = [
+                "\${3rd}/luv/library"
+                "\${3rd}/busted/library"
+              ];
+              checkThirdParty = false;
+            };
+            telemetry = {
+              enable = false;
+            };
+            format = {
+              enable = false;
+            };
+          };
+        };
+      };
       treesitter = "lua";
       formatter = {
         name = "stylua";
