@@ -156,6 +156,9 @@ let
         local opts = { buffer = event.buf, silent = true }
         local client = vim.lsp.get_client_by_id(event.data.client_id)
 
+	-- Enable omnifunc integration
+	vim.bo[event.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
+
         -- Core LSP navigation
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
