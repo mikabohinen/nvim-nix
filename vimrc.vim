@@ -530,15 +530,86 @@ if $TERM =~# '^screen'
   endif
 endif
 
-" Section: Colorscheme and Final Setup
+" Section: Indoor & Outdoor Colorschemes
+" =============================================================================
+
+" Global colorscheme variables
+let g:indoor_colorscheme = 'habamax'
+let g:outdoor_colorscheme = 'shine'
+execute 'colorscheme ' . g:indoor_colorscheme
+
+
+command! OutdoorMode call s:SetOutdoorMode()
+command! IndoorMode call s:SetIndoorMode()
+command! ToggleOutdoor call s:ToggleOutdoorMode()
+
+function! s:SetOutdoorMode()
+  let g:original_colorcolumn = &colorcolumn
+  let g:original_cursorline = &cursorline
+  let g:original_cursorcolumn = &cursorcolumn
+
+  set background=light
+  execute 'colorscheme ' . g:outdoor_colorscheme
+  set cursorline
+  set cursorcolumn
+  set colorcolumn=80
+  
+  " High contrast highlights for outdoor visibility
+  highlight CursorLine ctermbg=yellow guibg=#ffffcc
+  highlight CursorColumn ctermbg=lightcyan guibg=#e0ffff
+  highlight LineNr ctermfg=black ctermbg=white guifg=#000000 guibg=#ffffff
+  highlight CursorLineNr cterm=bold ctermfg=black ctermbg=yellow gui=bold guifg=#000000 guibg=#ffff00
+  highlight Visual ctermbg=blue ctermfg=white guibg=#0000ff guifg=#ffffff
+  highlight Search ctermbg=red ctermfg=white guibg=#ff0000 guifg=#ffffff
+  highlight StatusLine cterm=bold ctermfg=white ctermbg=black gui=bold guifg=#ffffff guibg=#000000
+  highlight StatusLineNC ctermfg=black ctermbg=white guifg=#000000 guibg=#ffffff
+  highlight ColorColumn ctermbg=lightgray ctermfg=black guibg=#e0e0e0 guifg=#000000
+
+  let g:outdoor_mode_active = 1
+endfunction
+
+function! s:SetIndoorMode()
+  set background=dark
+  execute 'colorscheme ' . g:indoor_colorscheme
+  if exists('g:original_colorcolumn')
+    let &colorcolumn = g:original_colorcolumn
+  else
+    set colorcolumn=
+  endif
+  if exists('g:original_cursorline')
+    let &cursorline = g:original_cursorline
+  else
+    set nocursorline
+  endif
+  
+  if exists('g:original_cursorcolumn')
+    let &cursorcolumn = g:original_cursorcolumn
+  else
+    set nocursorcolumn
+  endif
+  
+
+  if exists('g:outdoor_mode_active')
+    unlet g:outdoor_mode_active
+  endif
+endfunction
+
+function! s:ToggleOutdoorMode()
+  if exists('g:outdoor_mode_active')
+    call s:SetIndoorMode()
+  else
+    call s:SetOutdoorMode()
+  endif
+endfunction
+
+
+" Section: Final Setup
 " =============================================================================
 
 " Better color detection
 if $TERM !~? 'linux' && &t_Co == 8
   set t_Co=16
 endif
-
-colorscheme habamax
 
 " Load matchit for better % matching
 packadd! matchit
@@ -559,4 +630,4 @@ set viewoptions-=options
 " END OF CONFIGURATION
 " =============================================================================
 
-" vim:set et sw=2 foldmethod=expr
+" vim:set et sw=2 foldmethod=exp
