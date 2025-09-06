@@ -47,6 +47,48 @@ for s:dir in [&backupdir, &directory]
   endif
 endfor
 
+" Section: Functions
+" =============================================================================
+
+function! FuzzyFindFunc(cmdarg, cmdcomplete)
+    return systemlist("fd --hidden . \| fzf --filter='" 
+        \.. a:cmdarg .. "'")
+endfunction
+
+function! FuzzyFilterQf(...) abort
+    call setqflist(matchfuzzy(getqflist(), join(a:000, " "), {'key': 'text'}))
+endfunction
+
+function! StripTrailingWhitespace()
+  let l:save = winsaveview()
+  keeppatterns %s/\s\+$//e
+  call winrestview(l:save)
+endfunction
+
+function! LspDiagnosticCounts()
+  if !has('nvim')
+    return ''
+  endif
+  
+  let l:errors = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.ERROR})')
+  let l:warnings = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.WARN})')
+  let l:hints = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.HINT})')
+  
+  let l:result = ''
+  if l:errors > 0
+    let l:result .= ' E:' . l:errors
+  endif
+  if l:warnings > 0
+    let l:result .= ' W:' . l:warnings
+  endif
+  if l:hints > 0
+    let l:result .= ' H:' . l:hints
+  endif
+  
+  return l:result
+endfunction
+
+
 " Section: Search, Navigation, and Tags
 " =============================================================================
 
@@ -56,8 +98,8 @@ set hlsearch
 set ignorecase
 set smartcase
 
-" Better path and include settings
-set path+=**
+" Better find and include settings
+set findfunc=FuzzyFindFunc
 set include=
 set tags=./tags;
 
@@ -86,7 +128,7 @@ set listchars=tab:▸\ ,trail:·,extends:❯,precedes:❮
 
 set history=1000
 set wildmenu
-set wildmode=longest:longest,full
+set wildmode=longest:lastused,full
 set wildoptions=tagfile
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.DS_Store,*.db
 set wildignore+=node_modules/**,*.git/**,*.hg/**,*.svn/**
@@ -138,30 +180,39 @@ nnoremap <leader>? ?\v
 vnoremap <leader>? ?\v
 
 " File operations
-nnoremap <leader><leader> :find *
-nnoremap <leader>ff :find *
-nnoremap <leader>fF :find **/*
+nnoremap <leader><leader> :find<space>
+nnoremap <leader>ff :find<space>
+nnoremap <leader>fF :vert sf<space>
 
 " Buffer management
-nnoremap <leader>fb :buffer *
-nnoremap <leader>fB :sbuffer *
+nnoremap <leader>fb :buffer<space>
+nnoremap <leader>fB :sbuffer<space>
 nnoremap [b :bprevious<CR>
 nnoremap ]b :bnext<CR>
-nnoremap [B :bfirst
-nnoremap ]B :blast
+nnoremap [B :bfirst<CR>
+nnoremap ]B :blast<CR>
 nnoremap <leader>bd :bdelete<CR>
 
 " Search operations
-nnoremap <leader>fw :grep "" .<Left><Left><Left>
-nnoremap <leader>fW :vimgrep // **/*<Left><Left><Left><Left><Left><Left>
-nnoremap <leader>fs :lgrep "" .<Left><Left><Left>
-nnoremap <leader>fS :lvimgrep // **/*<Left><Left><Left><Left><Left><Left>
+nnoremap <leader>fw :grep ''<Left>
+nnoremap <leader>fW :grep <C-R><C-W><cr>
+nnoremap <leader>fs :lgrep ''<Left>
+nnoremap <leader>fS :lgrep <C-R><C-W><cr>
+nnoremap <leader>fc :Cfilter<space>
+nnoremap <leader>fz :Cfuzzy<space>
+
+" Search utilities
+cnoremap <C-space> .*
+cnoremap <A-9> \(
+cnoremap <A-0> \)
 
 " Quickfix and location lists
-nnoremap <leader>q :copen<CR>
-nnoremap <leader>Q :cclose<CR>
-nnoremap <leader>l :lopen<CR>
-nnoremap <leader>L :lclose<CR>
+nnoremap <leader>qq :copen<CR>
+nnoremap <leader>qQ :cclose<CR>
+nnoremap <leader>qo :colder<space>
+nnoremap <leader>qn :cnewer<space>
+nnoremap <leader>ll :lopen<CR>
+nnoremap <leader>lL :lclose<CR>
 nnoremap ]q :cnext<CR>
 nnoremap [q :cprevious<CR>
 nnoremap ]l :lnext<CR>
@@ -176,10 +227,13 @@ nnoremap <leader>cI :LspInfo<CR>
 
 " grep settings
 set grepformat=%f:%l:%c:%m,%f:%l:%m,%f:%l%m,%f\ \ %l%m
-set grepprg=rg\ --vimgrep\ --smart-case
+set grepprg=rg\ --vimgrep\ --hidden\ -g\ '!.git/*'
 
 " Section: Commands
 " =============================================================================
+
+" Fuzzy finding
+command! -nargs=1 Cfuzzy call FuzzyFilterQf(<f-args>)
 
 " Utility commands
 command! StripWhitespace call StripTrailingWhitespace()
@@ -197,38 +251,6 @@ if has('nvim')
   command! LspRestart lua vim.lsp.stop_client(vim.lsp.get_active_clients()); edit
   command! LspInfo lua vim.cmd('LspInfo')
 endif
-
-" Section: Functions
-" =============================================================================
-
-function! StripTrailingWhitespace()
-  let l:save = winsaveview()
-  keeppatterns %s/\s\+$//e
-  call winrestview(l:save)
-endfunction
-
-function! LspDiagnosticCounts()
-  if !has('nvim')
-    return ''
-  endif
-  
-  let l:errors = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.ERROR})')
-  let l:warnings = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.WARN})')
-  let l:hints = luaeval('#vim.diagnostic.get(0, {severity = vim.diagnostic.severity.HINT})')
-  
-  let l:result = ''
-  if l:errors > 0
-    let l:result .= ' E:' . l:errors
-  endif
-  if l:warnings > 0
-    let l:result .= ' W:' . l:warnings
-  endif
-  if l:hints > 0
-    let l:result .= ' H:' . l:hints
-  endif
-  
-  return l:result
-endfunction
 
 " Section: Autocommands
 " =============================================================================
@@ -274,13 +296,18 @@ augroup END
 " Section: Final Setup
 " =============================================================================
 
+" Colorscheme
+colorscheme habamax
+
 " Better color detection
 if $TERM !~? 'linux' && &t_Co == 8
   set t_Co=16
 endif
 
-" Load matchit for better % matching
+" Load matchit for better % matching and cfilter for fuzzy filtering quickfix
+" list
 packadd! matchit
+packadd! cfilter
 
 " Better status line
 set statusline=%f\ %h%w%m%r%{LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P

@@ -7,7 +7,12 @@ let
 
   components = utils.extractComponents languages;
 
-  allTools = components.languageServers ++ components.formatters;
+  utilityTools = with pkgs; [
+    ripgrep
+    fd
+    fzf
+  ];
+  allTools = components.languageServers ++ components.formatters ++ utilityTools;
 
   luaDiagnostics = pkgs.writeText "diagnostics.lua"
     (builtins.readFile ../config/lua/diagnostics.lua);

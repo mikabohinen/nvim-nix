@@ -1,8 +1,5 @@
 # nvim-nix
 
-A principled, comprehensive, and reproducible Neovim environment that just
-works.
-
 This is my personal Neovim configuration. I'm sharing it not because I think
 everyone should use it exactly as-is, but because I've spent a lot of time
 thinking through the principles behind editor configuration, and I think the
