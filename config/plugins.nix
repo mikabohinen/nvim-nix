@@ -1,6 +1,3 @@
-# plugins.nix
-# Declarative plugin definitions with exact version control
-
 { pkgs, lib }:
 
 let
@@ -61,34 +58,5 @@ let
 
   builtPlugins = lib.mapAttrs buildPlugin pluginSources;
 
-in rec {
-  inherit pluginSources;
-
-  plugins = builtPlugins;
-
-  pluginList = lib.attrValues builtPlugins;
-
-  utils = {
-    listPlugins = lib.mapAttrsToList (name: source: {
-      inherit name;
-      inherit (source) owner repo rev;
-      url = "https://github.com/${source.owner}/${source.repo}";
-    }) pluginSources;
-
-    pluginCount = lib.length (lib.attrNames pluginSources);
-
-    hasPlugin = name: pluginSources ? ${name};
-
-    getPlugin = name:
-      if pluginSources ? ${name}
-      then pluginSources.${name} // { inherit name; }
-      else throw "Plugin '${name}' not found";
-  };
-
-  # Version info for debugging
-  versionInfo = {
-    pluginSources = pluginSources;
-    pluginCount = utils.pluginCount;
-    plugins = lib.attrNames pluginSources;
-  };
-}
+in
+lib.attrValues builtPlugins

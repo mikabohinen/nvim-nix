@@ -1,5 +1,5 @@
 {
-  description = "A reproducible and minimal Neovim configuration";
+  description = "A reproducible and principled Neovim configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -11,50 +11,34 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+    let
+      lib = nixpkgs.lib.extend (final: prev: (import ./lib {
+	inherit final prev;
+      }));
+    in
     (flake-utils.lib.eachDefaultSystem
       (system:
         let
           pkgs = import nixpkgs {
-            inherit system;
+            localSystem = { inherit system; };
             overlays = [ inputs.neovim-nightly-overlay.overlays.default ];
           };
-
-          nvimPackages = pkgs.callPackage ./default.nix { inherit pkgs; };
-          utils = import ./lib/utils.nix { inherit pkgs lib; };
-          lib = nixpkgs.lib;
-
         in
         {
           packages = {
-            default = nvimPackages.full;
-            neovim = nvimPackages.neovim;
-            neovim-full = nvimPackages.full;
-            dev-tools = pkgs.buildEnv {
-              name = "nvim-dev-tools";
-              paths = nvimPackages.languageServers ++ nvimPackages.formatters ++ nvimPackages.extraTools;
-            };
-            plugins = nvimPackages.pluginUtils;
+            nvim-nix = pkgs.callPackage ./package { inherit lib; };
+            default = self.packages.${system}.nvim-nix;
           };
 
-          apps = utils.makeApps nvimPackages;
-
-          devShells = {
-            default = utils.makeDevShell nvimPackages;
-            plugins = nvimPackages.pluginInfo.devShell;
-          };
-
-          lib.versionInfo = utils.getVersionInfo nvimPackages;
+          apps = {
+	    nvim-nix = {
+	      type = "app";
+	      program = "${self.packages.${system}.nvim-nix}/bin/nvim";
+	    };
+	    default = self.apps.${system}.nvim-nix;
+	  };
         }
       )) // {
-      nixosModules.default = import ./modules/nixos.nix {
-        inherit nixpkgs;
-        overlay = inputs.neovim-nightly-overlay.overlays.default;
-      };
-      homeManagerModules.default = import ./modules/home-manager.nix {
-        inherit nixpkgs;
-        overlay = inputs.neovim-nightly-overlay.overlays.default;
-      };
-
       overlays.default = final: prev: {
         nvim-nix = self.packages.${prev.system}.default;
       };
