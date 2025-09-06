@@ -7,20 +7,12 @@ set nocompatible
 filetype plugin indent on
 syntax enable
 
-" Environment detection for cross-platform compatibility
-let s:is_windows = has('win32') || has('win64')
-let s:is_mac = has('mac') || has('macunix')
-let s:is_gui = has('gui_running')
-let s:has_terminal = exists(':terminal')
-
 " Section: File Management and Directories
 " =============================================================================
 
 " XDG-compliant directory setup
 if !empty($XDG_DATA_HOME)
   let s:data_home = substitute($XDG_DATA_HOME, '/$', '', '') . '/nvim/'
-elseif s:is_windows
-  let s:data_home = expand('~/AppData/Local/nvim/')
 else
   let s:data_home = expand('~/.local/share/nvim/')
 endif
@@ -87,14 +79,7 @@ set confirm
 set visualbell
 set laststatus=2
 set lazyredraw
-
-" List characters
-if (&termencoding ==# 'utf-8' || &encoding ==# 'utf-8') && v:version >= 700
-  let &listchars = "tab:\u21e5\u00b7,trail:\u2423,extends:\u21c9,precedes:\u21c7,nbsp:\u00b7"
-  let &fillchars = "vert:\u250b,fold:\u00b7"
-else
-  set listchars=tab:>\ ,trail:-,extends:>,precedes:<
-endif
+set listchars=tab:▸\ ,trail:·,extends:❯,precedes:❮
 
 " Section: Command Line and Completion
 " =============================================================================
@@ -182,21 +167,6 @@ nnoremap [q :cprevious<CR>
 nnoremap ]l :lnext<CR>
 nnoremap [l :lprevious<CR>
 
-" Global nix mappings under <leader>n
-nnoremap <leader>nr :NixRun
-nnoremap <leader>nb :NixBuild
-nnoremap <leader>ns :NixShell<CR>
-nnoremap <leader>nu :NixUpdate<CR>
-nnoremap <leader>nc :NixCheck<CR>
-nnoremap <leader>ni :NixInfo<CR>
-nnoremap <leader>nS :NixSearch
-nnoremap <leader>ne :NixEval
-nnoremap <leader>nC :NixClean<CR>
-
-" Quick file access
-nnoremap <leader>ef :EditFlake<CR>
-nnoremap <leader>ed :EditDefault<CR>
-
 " LSP mappings
 nnoremap <leader>cR :LspRestart<CR>
 nnoremap <leader>cI :LspInfo<CR>
@@ -204,36 +174,12 @@ nnoremap <leader>cI :LspInfo<CR>
 " Section: External Commands and Integration
 " =============================================================================
 
-" Enhanced grep settings
+" grep settings
 set grepformat=%f:%l:%c:%m,%f:%l:%m,%f:%l%m,%f\ \ %l%m
-if executable('rg')
-  set grepprg=rg\ --vimgrep\ --smart-case
-elseif executable('ag')
-  set grepprg=ag\ --vimgrep
-elseif has('unix')
-  set grepprg=grep\ -rn\ $*\ /dev/null
-endif
+set grepprg=rg\ --vimgrep\ --smart-case
 
-" Section: Abbreviations and Commands
+" Section: Commands
 " =============================================================================
-
-" Common typo corrections
-iabbrev teh the
-iabbrev adn and
-iabbrev seperate separate
-iabbrev definately definitely
-iabbrev recieve receive
-
-" Command shortcuts
-command! W w
-command! Q q
-command! WQ wq
-command! Wq wq
-command! Qa qa
-
-" Configuration access
-command! EditVimrc edit ~/src/nvim-nix/vimrc.vim
-command! ReloadVimrc source ~/src/nvim-nix/vimrc.vim
 
 " Utility commands
 command! StripWhitespace call StripTrailingWhitespace()
@@ -284,13 +230,6 @@ function! LspDiagnosticCounts()
   return l:result
 endfunction
 
-function! s:Open(...) abort
-  let cmd = s:is_windows ? 'start' : executable('xdg-open') ? 'xdg-open' : 'open'
-  let args = a:0 ? copy(a:000) : [expand('%:p')]
-  call map(args, 'shellescape(v:val)')
-  return system(cmd . ' ' . join(args, ' '))
-endfunction
-
 " Section: Autocommands
 " =============================================================================
 
@@ -327,281 +266,10 @@ augroup vimrc
 
 augroup END
 
-augroup nix_mappings
-  autocmd!
-
-  " Nix-specific mappings for .nix files
-  autocmd FileType nix nnoremap <buffer> <localleader>r :NixRun<CR>
-  autocmd FileType nix nnoremap <buffer> <localleader>b :NixBuild<CR>
-  autocmd FileType nix nnoremap <buffer> <localleader>c :NixCheck<CR>
-  autocmd FileType nix nnoremap <buffer> <localleader>u :NixUpdate<CR>
-  autocmd FileType nix nnoremap <buffer> <localleader>s :NixShell<CR>
-  autocmd FileType nix nnoremap <buffer> <localleader>i :NixInfo<CR>
-
-  " Global nix development mappings
-  autocmd FileType nix nnoremap <buffer> <leader>ef :EditFlake<CR>
-  autocmd FileType nix nnoremap <buffer> <leader>ed :EditDefault<CR>
-augroup END
-
 augroup LispAutoPair
   autocmd!
   autocmd FileType lisp,scheme,clojure inoremap <buffer> ( ()<Left>
 augroup END
-
-" =============================================================================
-" NIX INTEGRATION COMMANDS
-" =============================================================================
-
-" Helper function to run nix commands with proper output
-function! s:RunNixCommand(cmd, args, async)
-  let l:full_cmd = 'nix ' . a:cmd . ' ' . a:args
-
-  if a:async && (has('nvim') || has('job'))
-    " Async execution for long-running commands
-    echo '🚀 Running: ' . l:full_cmd
-
-    if has('nvim')
-      call jobstart(l:full_cmd, {
-        \ 'on_stdout': function('s:NixJobOutput'),
-        \ 'on_stderr': function('s:NixJobError'),
-        \ 'on_exit': function('s:NixJobExit'),
-        \ 'stdout_buffered': v:false,
-        \ 'stderr_buffered': v:false,
-        \ })
-    else
-      " Vim 8+ job support
-      call job_start(l:full_cmd, {
-        \ 'out_cb': function('s:NixJobOutputVim'),
-        \ 'err_cb': function('s:NixJobErrorVim'),
-        \ 'exit_cb': function('s:NixJobExitVim'),
-        \ })
-    endif
-  else
-    " Synchronous execution
-    echo '⏳ Executing: ' . l:full_cmd
-    let l:result = system(l:full_cmd)
-
-    if v:shell_error == 0
-      if !empty(l:result)
-        echo l:result
-      endif
-      echo '✓ ' . l:full_cmd . ' completed'
-    else
-      echohl ErrorMsg
-      echo '✗ ' . l:full_cmd . ' failed:'
-      echo l:result
-      echohl None
-    endif
-  endif
-endfunction
-
-" Job callback functions for Neovim
-function! s:NixJobOutput(job_id, data, event)
-  for line in a:data
-    if !empty(line)
-      echo line
-    endif
-  endfor
-endfunction
-
-function! s:NixJobError(job_id, data, event)
-  for line in a:data
-    if !empty(line)
-      echohl ErrorMsg | echo line | echohl None
-    endif
-  endfor
-endfunction
-
-function! s:NixJobExit(job_id, code, event)
-  if a:code == 0
-    echo '✓ Nix command completed successfully'
-  else
-    echohl ErrorMsg
-    echo '✗ Nix command failed with code ' . a:code
-    echohl None
-  endif
-endfunction
-
-" Job callback functions for Vim 8+
-function! s:NixJobOutputVim(channel, msg)
-  echo a:msg
-endfunction
-
-function! s:NixJobErrorVim(channel, msg)
-  echohl ErrorMsg | echo a:msg | echohl None
-endfunction
-
-function! s:NixJobExitVim(job, status)
-  if a:status == 0
-    echo '✓ Nix command completed successfully'
-  else
-    echohl ErrorMsg
-    echo '✗ Nix command failed with code ' . a:status
-    echohl None
-  endif
-endfunction
-
-" Nix command definitions
-command! -nargs=? -complete=custom,s:NixRunComplete NixRun
-  \ call s:RunNixCommand('run', empty(<q-args>) ? '.' : <q-args>, 1)
-
-command! -nargs=? -complete=custom,s:NixBuildComplete NixBuild
-  \ call s:RunNixCommand('build', empty(<q-args>) ? '.' : <q-args>, 1)
-
-command! -nargs=? NixShell call s:NixDevelopShell(<q-args>)
-
-command! -nargs=? -complete=custom,s:NixInputComplete NixUpdate
-  \ call s:RunNixCommand('flake update', empty(<q-args>) ? '' : '--update-input ' . <q-args>, 1)
-
-command! -nargs=* NixCheck
-  \ call s:RunNixCommand('flake check', <q-args>, 1)
-
-command! NixClean call s:NixClean()
-
-command! -nargs=? NixInfo
-  \ call s:RunNixCommand('flake show', empty(<q-args>) ? '.' : <q-args>, 0)
-
-command! -nargs=1 NixSearch
-  \ call s:RunNixCommand('search nixpkgs', <q-args>, 1)
-
-command! -nargs=+ NixWhyDepends
-  \ call s:RunNixCommand('why-depends', <q-args>, 0)
-
-command! -nargs=1 NixEval
-  \ call s:RunNixCommand('eval', '--expr ' . shellescape(<q-args>), 0)
-
-" Helper functions for specific commands
-function! s:NixDevelopShell(target)
-  let l:target = empty(a:target) ? '.' : a:target
-
-  if has('nvim')
-    vsplit
-    execute 'terminal nix develop ' . l:target
-    startinsert
-  elseif has('terminal')
-    execute 'terminal nix develop ' . l:target
-  else
-    echo 'Opening nix develop shell in background...'
-    execute '!nix develop ' . l:target
-  endif
-endfunction
-
-function! s:NixClean()
-  let l:confirm = input('Clean nix store and remove old generations? (y/N): ')
-  if tolower(l:confirm) ==# 'y' || tolower(l:confirm) ==# 'yes'
-    echo '🧹 Cleaning nix store...'
-    call s:RunNixCommand('store gc', '', 1)
-    call s:RunNixCommand('profile wipe-history', '', 0)
-  else
-    echo 'Cancelled.'
-  endif
-endfunction
-
-" Completion functions
-function! s:NixRunComplete(ArgLead, CmdLine, CursorPos)
-  return ".#default\n.#neovim\n."
-endfunction
-
-function! s:NixBuildComplete(ArgLead, CmdLine, CursorPos)
-  return ".#default\n.#neovim\n."
-endfunction
-
-function! s:NixInputComplete(ArgLead, CmdLine, CursorPos)
-  return "nixpkgs\nflake-utils\nneovim-nightly-overlay"
-endfunction
-
-" Quick file editing commands
-command! EditFlake edit flake.nix
-command! EditDefault edit default.nix
-
-" Section: Platform-Specific Tweaks
-" =============================================================================
-
-if s:is_mac
-  set macmeta
-elseif s:is_windows
-  set shell=cmd
-  set shellcmdflag=/c
-endif
-
-if $TERM =~# '^screen'
-  if exists('+ttymouse') && &ttymouse ==# ''
-    set ttymouse=xterm
-  endif
-endif
-
-" Section: Indoor & Outdoor Colorschemes
-" =============================================================================
-
-" Global colorscheme variables
-let g:indoor_colorscheme = 'habamax'
-let g:outdoor_colorscheme = 'shine'
-execute 'colorscheme ' . g:indoor_colorscheme
-
-
-command! OutdoorMode call s:SetOutdoorMode()
-command! IndoorMode call s:SetIndoorMode()
-command! ToggleOutdoor call s:ToggleOutdoorMode()
-
-function! s:SetOutdoorMode()
-  let g:original_colorcolumn = &colorcolumn
-  let g:original_cursorline = &cursorline
-  let g:original_cursorcolumn = &cursorcolumn
-
-  set background=light
-  execute 'colorscheme ' . g:outdoor_colorscheme
-  set cursorline
-  set cursorcolumn
-  set colorcolumn=80
-  
-  " High contrast highlights for outdoor visibility
-  highlight CursorLine ctermbg=yellow guibg=#ffffcc
-  highlight CursorColumn ctermbg=lightcyan guibg=#e0ffff
-  highlight LineNr ctermfg=black ctermbg=white guifg=#000000 guibg=#ffffff
-  highlight CursorLineNr cterm=bold ctermfg=black ctermbg=yellow gui=bold guifg=#000000 guibg=#ffff00
-  highlight Visual ctermbg=blue ctermfg=white guibg=#0000ff guifg=#ffffff
-  highlight Search ctermbg=red ctermfg=white guibg=#ff0000 guifg=#ffffff
-  highlight StatusLine cterm=bold ctermfg=white ctermbg=black gui=bold guifg=#ffffff guibg=#000000
-  highlight StatusLineNC ctermfg=black ctermbg=white guifg=#000000 guibg=#ffffff
-  highlight ColorColumn ctermbg=lightgray ctermfg=black guibg=#e0e0e0 guifg=#000000
-
-  let g:outdoor_mode_active = 1
-endfunction
-
-function! s:SetIndoorMode()
-  set background=dark
-  execute 'colorscheme ' . g:indoor_colorscheme
-  if exists('g:original_colorcolumn')
-    let &colorcolumn = g:original_colorcolumn
-  else
-    set colorcolumn=
-  endif
-  if exists('g:original_cursorline')
-    let &cursorline = g:original_cursorline
-  else
-    set nocursorline
-  endif
-  
-  if exists('g:original_cursorcolumn')
-    let &cursorcolumn = g:original_cursorcolumn
-  else
-    set nocursorcolumn
-  endif
-  
-
-  if exists('g:outdoor_mode_active')
-    unlet g:outdoor_mode_active
-  endif
-endfunction
-
-function! s:ToggleOutdoorMode()
-  if exists('g:outdoor_mode_active')
-    call s:SetIndoorMode()
-  else
-    call s:SetOutdoorMode()
-  endif
-endfunction
-
 
 " Section: Final Setup
 " =============================================================================
@@ -613,11 +281,6 @@ endif
 
 " Load matchit for better % matching
 packadd! matchit
-
-" UTF-8 encoding fallback
-if &encoding ==# 'latin1' && s:is_gui
-  set encoding=utf-8
-endif
 
 " Better status line
 set statusline=%f\ %h%w%m%r%{LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
