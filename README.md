@@ -22,7 +22,7 @@ that the systematic approach to making these decisions might be helpful.
 
 There is another point I need to clarify. Although this might look like a
 minimal config given how few plugins are present this is a misunderstanding.
-The vimrc alone is more than 300+ lines of code, and add on to that
+The vimrc is more than 200+ lines of code, and add on to that
 comprehensive Nix infrastructure, language servers/formatters/linters, and what
 you get is far from minimal.
 
