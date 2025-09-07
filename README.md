@@ -1,4 +1,4 @@
-# nvim-nix
+# nvim.nix
 
 This is my personal Neovim configuration.
 
@@ -274,10 +274,9 @@ Add to your `flake.nix`:
     nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux"; # or your system
       modules = [
-        nvim-nix.nixosModules.default
         {
           nixpkgs.overlays = [
-            inputs.nvim-nix.overlays.default
+            nvim-nix.overlays.default
           ];
 
           environment.systemPackages = with pkgs; [
@@ -294,7 +293,7 @@ Or if you already have a `configuration.nix`, add this to your existing configur
 
 ```nix
 # In your configuration.nix or NixOS module
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   nixpkgs.overlays = [
     inputs.nvim-nix.overlays.default
