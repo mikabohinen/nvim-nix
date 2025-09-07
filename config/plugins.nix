@@ -9,13 +9,6 @@ let
       sha256 = "sha256-DZE5tkmnT+lAvx/RQHaDEgEJXRKsy56KJY919xiH1lE=";
     };
 
-    vim-vinegar = {
-      owner = "tpope";
-      repo = "vim-vinegar";
-      rev = "bb1bcddf43cfebe05eb565a84ab069b357d0b3d6";
-      sha256 = "sha256-rpHVTwXRFfWlBbduJPSqtDjDEQTjwpi6mQ2LQJvRZiA=";
-    };
-
     vim-repeat = {
       owner = "tpope";
       repo = "vim-repeat";

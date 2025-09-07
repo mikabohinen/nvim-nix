@@ -43,6 +43,7 @@ but it would hamper my learning in the long term.
 - **Principled**: Every decision is documented and reasoned through
 - **Reproducible**: Exact same setup on any machine with Nix
 - **Fast**: ~36ms startup time vs 200ms+ for typical modern configs
+- **Mastery-focused**: Emphasizes learning transferable Vim skills
 
 ## Prerequisites
 
@@ -127,7 +128,7 @@ These principles inform the choice of plugins.
 See [selection criteria](#Plugin-selection-criteria) for the exact details of
 why these specific plugins are acceptable.
 
-**Modern Necessities** (what vimscript can't handle well):
+**Modern Necessities**
 
 - **nvim-lspconfig**: Language server integration
 - **nvim-treesitter + textobjects**: Enhanced syntax and structural navigation
@@ -136,7 +137,6 @@ why these specific plugins are acceptable.
 
 - **vim-surround**: Text object manipulation
 - **vim-repeat**: Quality of life addition
-- **vim-vinegar**: Enhanced netrw
 
 **Development Integration**:
 
@@ -195,18 +195,19 @@ it if and only if it also satisfies the following criteria:
 - **Auto-formatters**: `:!black %` forces you to understand the underlying tooling
 - **Visual git tools**: command-line git + fugitive forces you to grok git
 - **Session managers**: `:mksession` covers 80% of use cases
+- **File managers**: netrw with proper configuration provides everything needed
 
 ## Architecture
 
 ### Three-Layer Approach
 
-nvim-nix employs a three-layer architecture that leverages the strengths of
+nvim.nix employs a three-layer architecture that leverages the strengths of
 Nix, Vimscript, and Lua respectively. Each language does what it is good at and
 no more:
 
 #### Nix Layer (Infrastructure)
 
-*"What should exist"*
+What should exist:
 
 - **Declarative Environment**: Packages, plugins, language servers, formatters
 - **Reproducible Systems**: Identical setups across machines and time
@@ -220,25 +221,25 @@ plugins = [ vim-surround vim-fugitive ];
 
 #### Vimscript Layer (Behavior)
 
-*"How should Vim behave"*
+How should Vim behave:
 
 - **Core Workflow**: Traditional Vim commands, mappings, patterns
 - **User Interface**: Status line, quickfix integration, helper functions
-- **Command Definitions**: All :commands and <leader> mappings
+- **Command Definitions**: All :commands and essential mappings
 - **Editor Behavior**: Settings, autocommands, traditional Vim features
 
 ```vim
 " Vimscript handles: "How should the editor behave"
-nnoremap <leader>fw :grep ''<Left>
+set findfunc=FuzzyFindFiles
 command! StripWhitespace call StripTrailingWhitespace()
 ```
 
 #### Lua Layer (Modern Features)
 
-*"How should modern features work"*
+How should modern features work:
 
 - **LSP Configuration**: Language server setup, capabilities, handlers
-- **Dynamic Behavior**: Buffer-local keymaps that activate in response to LSP events
+- **Dynamic Behavior**: Buffer-local commands that activate in response to LSP events
 - **Modern APIs**: Diagnostic configuration, treesitter, floating windows
 - **Event-Driven**: Autocommands that respond to LSP attachment
 
@@ -246,7 +247,8 @@ command! StripWhitespace call StripTrailingWhitespace()
 -- Lua handles: "How should modern features integrate"
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(event)
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {buffer = event.buf})
+    vim.api.nvim_buf_create_user_command(event.buf, 'LspAction',
+      function() vim.lsp.buf.code_action() end, {})
   end,
 })
 ```
@@ -307,207 +309,164 @@ Or if you already have a `configuration.nix`, add this to your existing configur
 
 ## Key Bindings
 
-I have attempted to make the keybindings follow consistent patterns. Obviously,
-the more keymappings with different and unrelated functionality you add, the
-harder it becomes to have a system around it. In any case, this is my best attempt:
+This configuration prioritizes learning transferable Vim skills over convenience shortcuts. Most operations use standard Vim commands rather than custom mappings.
 
 ### Core Patterns
 
-**Leader key**: `<Space>` for global operations
-**Local leader**: `,` for filetype-specific operations
+**No leader key clutter**: Most operations use standard Vim commands (`:find`, `:grep`, `:copen`, etc.)
 
-All bindings follow functional grouping:
-- `<leader>f*`: All "finding" operations (files, buffers, search)
-- `<leader>g*`: Git operations
-- `<leader>c*`: Code operations (LSP, diagnostics, formatting)
-- `<leader>cd*`: Code diagnostic operations specifically
-- `<leader>w*`: Workspace management (LSP)
+**Vim's standard patterns**: All navigation follows Vim's `][` and buffer patterns
 
-This way, once you remember that `f` means "find", you can guess that
-`<leader>fw` probably searches the workspace, `<leader>ff` finds files, etc.
-
-### Finding and Navigation
-
-The core of any editor workflow is finding things quickly. Vim's built-in tools
-are powerful once you learn them:
+### Essential Mappings (The Only Ones)
 
 ```vim
-" File finding (vim native - teaches you about path and wildcards)
-<leader><leader>  " :find<space> (quick access)
-<leader>ff        " :find<space> (explicit)
-<leader>fF        " :vert sf<space> (split search)
+" Fix Vim's & command behavior
+&                    " Repeat last :s command with flags
 
-" Buffer operations (work with vim's buffer model)
-<leader>fb       " :buffer<space> (find and open)
-<leader>fB       " :sbuffer<space> (find and split)
-[b / ]b          " Previous/next buffer (follows vim's ][ pattern)
-[B / ]B          " First/last buffer
-<leader>bd       " Delete buffer
+" File browser
+-                    " Edit current file's directory (:e %:h)
 
-" Search operations (builds on grep/vimgrep)
-<leader>fw       " :grep ''<Left> (project-wide search)
-<leader>fW       " :grep <C-R><C-W><cr> (search word under cursor)
-<leader>fs       " :lgrep ''<Left> (location list search)
-<leader>fS       " :lgrep <C-R><C-W><cr> (location list search word under cursor)
-<leader>fc       " :Cfilter<space> (filter quickfix)
-<leader>fz       " :Cfuzzy<space> (fuzzy filter quickfix)
+" List navigation
+]q / [q              " Next/previous quickfix
+]l / [l              " Next/previous location list
+]b / [b              " Next/previous buffer
+]B / [B              " First/last buffer
+
+" Clear search highlighting
+<Esc><Esc>           " Clear search highlights
 ```
 
-**Search utilities** for command line:
-```vim
-<C-space>        " .* (any characters wildcard)
-<A-9>            " \( (escaped parenthesis)
-<A-0>            " \) (escaped parenthesis)
-```
-
-The point here is that you're learning transferable skills. `:find` works on
-any Vim installation. Understanding the difference between quickfix and
-location lists helps you on any system.
-
-### Lists and Navigation
-
-Vim's list management is incredibly powerful once you understand it:
+### LSP Mappings (Buffer-local, only when LSP attached)
 
 ```vim
-" Quickfix & Location Lists (core vim navigation)
-<leader>qq / <leader>qQ   " Open/close quickfix
-<leader>qo / <leader>qn   " Older/newer quickfix list
-<leader>ll / <leader>lL   " Open/close location list
-]q / [q                   " Next/previous quickfix (vim's standard pattern)
-]l / [l                   " Next/previous location list
+" Core navigation (extends Vim's g* patterns)
+gd                   " Go to definition
+gr                   " Go to references
+gi                   " Go to implementation
+gD                   " Go to declaration
+gy                   " Go to type definition
+K                    " Hover documentation
 
-" Window movement (simplified from default C-w commands)
-<C-J>                     " Move to next window
-<C-K>                     " Move to previous window
-```
-
-### Enhanced Search
-
-```vim
-" Enhanced search patterns (very magic mode makes regex more predictable)
-<leader>/        " Search with \v (very magic)
-<leader>?        " Reverse search with \v (very magic)
-
-" Search control
-<Esc><Esc>       " Clear search highlighting
-n / N            " Next/previous search (auto-centered)
-* / #            " Search word under cursor (auto-centered)
-```
-
-### LSP and Modern Features
-
-These mappings only activate when LSP is attached to a buffer, so they don't interfere with regular Vim usage:
-
-```vim
-" Core LSP navigation (buffer-local, only when LSP is attached)
-gd               " Go to definition
-gr               " Go to references
-gi               " Go to implementation
-gD               " Go to declaration
-gy               " Go to type definition
-K                " Hover documentation
-<leader>cr       " Rename symbol
-<leader>ca       " Code actions (normal and visual mode)
-<leader>ck       " Signature help
-```
-
-**Diagnostic navigation** follows vim's `]q`/`[q` pattern for consistency:
-
-```vim
-]d / [d          " Next/previous diagnostic (any severity)
-]D / [D          " Next/previous error diagnostic (errors only)
-```
-
-**Diagnostic operations** are grouped under `<leader>cd` for "code diagnostic":
-
-```vim
-<leader>cdf      " Show diagnostic float (quick peek, auto-closes)
-<leader>cdF      " Show diagnostic float (scrollable, focusable with 'q' to close)
-<leader>cdl      " Send buffer diagnostics to location list
-<leader>cdq      " Send all diagnostics to quickfix list
-<leader>cds      " Show diagnostic summary (error/warning/hint counts)
-<leader>cdt      " Toggle virtual text diagnostics on/off
-```
-
-**LSP management** (always available):
-
-```vim
-<leader>cR       " Restart LSP client
-<leader>cI       " Show LSP info
-```
-
-**Workspace management** (buffer-local, LSP-specific):
-
-```vim
-<leader>wa       " Add workspace folder
-<leader>wr       " Remove workspace folder
-<leader>wl       " List workspace folders
+" Diagnostic navigation (follows ][ pattern)
+]d / [d              " Next/previous diagnostic
+]D / [D              " Next/previous error diagnostic
 ```
 
 ### Treesitter Features
 
-**Text objects** work with operators like `d`, `y`, `c`:
+**Text objects**:
 
 ```vim
-af / if          " Around/inside function
-ac / ic          " Around/inside class
-al / il          " Around/inside loop
-aa / ia          " Around/inside parameter
+af / if              " Around/inside function
+ac / ic              " Around/inside class
+al / il              " Around/inside loop
+aa / ia              " Around/inside parameter
 ```
 
-**Movement** follows vim's `][` convention:
+**Movement**:
 
 ```vim
-]f / [f          " Next/previous function start
-]c / [c          " Next/previous class start
-]F / [F          " Next/previous function end
-]C / [C          " Next/previous class end
+]f / [f              " Next/previous function start
+]c / [c              " Next/previous class start
+]F / [F              " Next/previous function end
+]C / [C              " Next/previous class end
 ```
 
-**Incremental selection** (for precise text selection):
+**Incremental selection**:
 
 ```vim
-gnn              " Start incremental selection
-grn              " Increment to next node
-grc              " Increment to scope
-grm              " Decrement selection
+gnn                  " Start incremental selection
+grn                  " Increment to next node
+grc                  " Increment to scope
+grm                  " Decrement selection
 ```
+
+### File Browser (netrw)
+
+netrw configuration provides a capable file browser:
+
+```vim
+-                    " Edit current file's directory
+:e .                 " Edit current working directory
+:e %:h               " Edit current file's directory (explicit)
+```
+
+Within netrw:
+- `<CR>` to open files
+- `D` to delete
+- `R` to rename
+- `%` to create new file
+- `d` to create new directory
 
 ### Lisp Development
 
-For Lisp, I use a terminal-based REPL workflow rather than trying to integrate everything into the editor:
+For Lisp, I use a terminal-based REPL workflow:
 
 ```vim
-:terminal sbcl    " Start SBCL in terminal split
-:terminal         " General terminal (customize as needed)
+:terminal sbcl       " Start SBCL in terminal split
+:terminal            " General terminal
 
 " Vim-sexp provides paredit-style editing
 " Standard text objects work semantically:
-di(              " Delete inside s-expression
-ya(              " Yank around s-expression
-ci(              " Change inside s-expression
+di(                  " Delete inside s-expression
+ya(                  " Yank around s-expression
+ci(                  " Change inside s-expression
 ```
 
 ## Commands
 
+### Essential Commands to Learn
+
+**File Operations** (instead of shortcuts):
+```vim
+:find filename       " Find and open file (with fuzzy completion)
+:vert sf filename    " Find and open in vertical split
+:grep pattern        " Search project-wide
+:grep <C-R><C-W>     " Search word under cursor
+```
+
+**Navigation**:
+```vim
+:cnext / :cprev      " Quickfix navigation
+:lnext / :lprev      " Location list navigation
+:bnext / :bprev      " Buffer navigation
+:bfirst / :blast     " First/last buffer
+```
+
+**Lists**:
+```vim
+:copen / :cclose     " Quickfix window
+:lopen / :lclose     " Location list window
+:Cfilter pattern     " Filter quickfix (from cfilter plugin)
+```
+
+### LSP Commands
+
+```vim
+:LspHover            " Show documentation
+:LspSig              " Show signature help
+:LspAction           " Show code actions
+:LspRename           " Rename symbol
+:WorkspaceAdd        " Add workspace folder
+:WorkspaceRemove     " Remove workspace folder
+:WorkspaceList       " List workspace folders
+```
+
+### Diagnostic Commands
+
+```vim
+:DiagFloat           " Show diagnostic at cursor
+:DiagQF              " Send all diagnostics to quickfix
+:DiagLoc             " Send buffer diagnostics to location list
+:DiagToggle          " Toggle virtual text diagnostics
+:LspRestart          " Restart LSP client
+:LspInfo             " Show LSP information
+```
+
 ### Utility Commands
 
 ```vim
-:H [topic]           " Open help in vertical split (e.g., :H buffers)
 :StripWhitespace     " Remove trailing whitespace from entire buffer
-```
-
-### LSP Diagnostic Commands
-
-```vim
-:DiagnosticsQF                 " Send all diagnostics to quickfix
-:DiagnosticsLoc                " Send buffer diagnostics to location list
-:DiagnosticsAll                " Show all project diagnostics
-:DiagnosticsErrors             " Show only errors
-:DiagnosticsWarnings           " Show only warnings
-:DiagnosticsToggleVirtualText  " Toggle inline diagnostic text
-:LspRestart                    " Restart LSP client
-:LspInfo                       " Show LSP client information
 ```
 
 ## Performance
@@ -563,18 +522,18 @@ vim-commentary = {
 ```
 if you wanted to auto-comment.
 
-
 ## FAQ
 
-**Q: Why only 8 plugins when my current config has 50+?**
+**Q: Why no leader key mappings when most configs have dozens?**
+A: Leader mappings provide convenience at the cost of learning transferable skills. `:find filename` works on any Vim installation and teaches you the underlying system. `<leader><leader>` only works with a specific config.
+
+**Q: Only 6 plugins when my current config has 50+?**
 A: I prioritize learning Vim's native capabilities over convenience features.
 Each plugin must provide capabilities Vim lacks. More plugins often means more
 complexity and less understanding of what's actually happening.
 
 **Q: No telescope? How do I find files quickly?**
-A: Use `:find` with tab completion, or `:grep` with quickfix lists. These
-teach you transferable skills that work on any Vim installation. Once you learn
-the patterns, they're often faster than fuzzy finders anyway.
+A: Use `:find` with fuzzy completion via our custom `findfunc`. This teaches you transferable skills that work on any Vim installation. Once you learn the patterns, they're often faster than fuzzy finders anyway.
 
 **Q: Can I add my favorite plugin X?**
 A: If you fork this (which you should), absolutely. Check the [plugin selection criteria](#plugin-selection-criteria) to think through the trade-offs. If it violates none of the exclusion rules and meets all inclusion criteria, it might be worth considering.
@@ -591,6 +550,9 @@ LazyVim/AstroNvim if you want those features out of the box. This config is
 deliberately minimal. For auto-completion specifically, I recommend learning
 Vim's built-in autocompletion system like `<C-x><C-o>` and `<C-n>/<C-p>`.
 
+**Q: How do I access diagnostics without shortcuts?**
+A: Use explicit commands: `:DiagFloat` for current cursor, `:DiagQF` for all diagnostics, `:DiagLoc` for buffer diagnostics. This teaches you the underlying diagnostic system.
+
 ## Migrating From Other Configs
 
 If you're coming from a more feature-rich config, expect some adjustment:
@@ -606,9 +568,13 @@ mv ~/.config/nvim ~/.config/nvim.backup
 # Then decide what you actually need
 ```
 
-**Expect workflow changes**: Manual formatting instead of auto-formatters,
-native file finding instead of fuzzy finders, quickfix lists instead of fancy
-UIs.
+**Expect workflow changes**:
+- Use `:find filename` instead of fuzzy finder shortcuts
+- Use `:grep pattern` instead of live grep shortcuts
+- Use native quickfix lists instead of fancy UIs
+- Use explicit commands instead of memorized shortcuts
+
+The goal is to learn Vim deeply rather than memorize config-specific shortcuts.
 
 ## Troubleshooting
 
@@ -645,6 +611,7 @@ it work for everyone.
 - UI/theme changes
 - Configuration options and customization features
 - Support for languages I don't use
+- Leader key mappings or convenience shortcuts
 
 ## License
 
