@@ -42,7 +42,6 @@ but it would hamper my learning in the long term.
 
 - **Principled**: Every decision is documented and reasoned through
 - **Reproducible**: Exact same setup on any machine with Nix
-- **Fast**: ~36ms startup time vs 200ms+ for typical modern configs
 - **Mastery-focused**: Emphasizes learning transferable Vim skills
 
 ## Prerequisites
@@ -469,26 +468,6 @@ ci(                  " Change inside s-expression
 :StripWhitespace     " Remove trailing whitespace from entire buffer
 ```
 
-## Performance
-
-On my machine (Intel i7-1355U, 16GB RAM, NixOS with btrfs), this starts up in
-about 36ms. Part of that is having fewer plugins, but part of it is also
-that everything is compiled ahead of time with Nix rather than being installed
-and configured at runtime.
-
-You can benchmark this yourself with:
-
-```bash
-# Install hyperfine for benchmarking
-nix shell nixpkgs#hyperfine
-
-# Test startup times
-hyperfine --warmup 3 --runs 10 'nvim --headless +q'
-
-# Compare with other configs if you have them
-hyperfine 'nvim --headless +q' 'lazyvim --headless +q'
-```
-
 ### Adding a Language
 
 Edit `config/languages.nix` and add
@@ -585,12 +564,6 @@ Install Nix: `curl -L https://nixos.org/nix/install | sh`
 
 **"experimental features not enabled"**
 Enable flakes in nix.conf - see [Prerequisites](#prerequisites)
-
-**Performance issues**
-This config is optimized for speed. If you experience slowness:
-- Check for large files (>10MB) - Vim handles these differently
-- Network filesystems may affect file operations
-- Ensure you're not loading additional plugins
 
 ## Contributing
 
