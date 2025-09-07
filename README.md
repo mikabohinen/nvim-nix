@@ -266,7 +266,7 @@ Add to your `flake.nix`:
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nvim-nix = {
-      url = "github:mikabohinen/nvim-nix";
+      url = "github:mikabohinen/nvim.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
