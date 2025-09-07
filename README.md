@@ -527,7 +527,7 @@ if you wanted to auto-comment.
 **Q: Why no leader key mappings when most configs have dozens?**
 A: Leader mappings provide convenience at the cost of learning transferable skills. `:find filename` works on any Vim installation and teaches you the underlying system. `<leader><leader>` only works with a specific config.
 
-**Q: Only 6 plugins when my current config has 50+?**
+**Q: Only 7 plugins when my current config has 50+?**
 A: I prioritize learning Vim's native capabilities over convenience features.
 Each plugin must provide capabilities Vim lacks. More plugins often means more
 complexity and less understanding of what's actually happening.
