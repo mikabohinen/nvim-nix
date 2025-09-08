@@ -357,7 +357,6 @@ Vim operations.
 ```vim
 <leader><leader>     " :find (primary file opener)
 <leader>sf           " :vert sf (split file opener)
-<leader>tf           " :find *_test.* (find corresponding test file)
 ```
 
 #### List Domain

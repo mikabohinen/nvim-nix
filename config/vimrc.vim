@@ -109,7 +109,7 @@ let g:netrw_liststyle = 3
 let g:netrw_browse_split = 0
 let g:netrw_altv = 1
 let g:netrw_winsize = 25
-let g:netrw_keepdir = 0
+let g:netrw_keepdir = 1
 
 " Section: Command Line and Completion
 " =============================================================================
@@ -180,7 +180,6 @@ nnoremap <leader>/ :grep <C-R><C-W><space>
 " File domain
 nnoremap <leader><leader> :find<space>
 nnoremap <leader>sf :vert sf<space>
-nnoremap <leader>tf :find %:t:r_test.<C-R>=expand('%:e')<CR><CR>
 
 " List domain
 nnoremap <leader>q :copen<CR>
@@ -197,7 +196,7 @@ nnoremap <leader>bd :bd<CR>
 
 " grep settings
 set grepformat=%f:%l:%c:%m,%f:%l:%m,%f:%l%m,%f\ \ %l%m
-set grepprg=rg\ --vimgrep\ --hidden\ --respect-gitignore\ --smart-case\ --follow\ -g\ '!{.git,node_modules,target,dist,build}/*'\ -g\ '!*.{log,tmp,temp,cache}'
+set grepprg=rg\ --vimgrep\ --hidden\ --smart-case\ --follow\ -g\ '!{.git,node_modules,target,dist,build}/*'\ -g\ '!*.{log,tmp,temp,cache}'
 
 " Section: Commands
 " =============================================================================
@@ -219,7 +218,7 @@ endif
 command! -nargs=1 Grep grep <args> | copen
 command! -nargs=1 LGrep lgrep <args> | lopen  
 command! -nargs=0 Todo grep -n "TODO\|FIXME\|XXX" | copen
-command! -nargs=0 GitGrep !git grep -n <args> | copen
+command! -nargs=+ GitGrep !git grep -n <args> | copen
 
 " Section: Autocommands
 " =============================================================================
