@@ -53,3 +53,27 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, 'List workspace folders')
   end,
 })
+
+function LspDiagnosticCounts()
+  local clients = vim.lsp.get_clients({bufnr = 0})
+  if #clients == 0 then
+    return ''
+  end
+
+  local diagnostics = {
+    {severity = vim.diagnostic.severity.ERROR, prefix = ' E:'},
+    {severity = vim.diagnostic.severity.WARN, prefix = ' W:'},
+    {severity = vim.diagnostic.severity.HINT, prefix = ' H:'},
+    {severity = vim.diagnostic.severity.INFO, prefix = ' I:'}
+  }
+
+  local result = ''
+  for _, diag in ipairs(diagnostics) do
+    local count = #vim.diagnostic.get(0, {severity = diag.severity})
+    if count > 0 then
+      result = result .. diag.prefix .. count
+    end
+  end
+
+  return result
+end

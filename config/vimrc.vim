@@ -106,7 +106,7 @@ set listchars=tab:▸\ ,trail:·,extends:❯,precedes:❮
 " Netrw improvements
 let g:netrw_banner = 0
 let g:netrw_liststyle = 3
-let g:netrw_browse_split = 4
+let g:netrw_browse_split = 0
 let g:netrw_altv = 1
 let g:netrw_winsize = 25
 let g:netrw_keepdir = 0
@@ -150,6 +150,9 @@ xnoremap & :&&<CR>
 " Edit the current directory
 nnoremap <silent> - :e %:h<CR>
 
+" Easy expansion of current directory
+cnoremap <expr> %% getcmdtype () == ':' ? expand('%:h').'/' : "%%"
+
 " Quickfix and location list navigation
 nnoremap ]q :cnext<CR>
 nnoremap [q :cprevious<CR>
@@ -168,12 +171,33 @@ nnoremap ]B :blast<CR>
 let mapleader = " "
 let maplocalleader = ","
 
+" Search domain
+nnoremap <leader>g :grep<space>
+nnoremap <leader>G :grep <C-R><C-W><CR>
+nnoremap <leader>* :grep <C-R>/<CR>
+nnoremap <leader>/ :grep <C-R><C-W><space>
+
+" File domain
+nnoremap <leader><leader> :find<space>
+nnoremap <leader>sf :vert sf<space>
+nnoremap <leader>tf :find %:t:r_test.<C-R>=expand('%:e')<CR><CR>
+
+" List domain
+nnoremap <leader>q :copen<CR>
+nnoremap <leader>l :lopen<CR>
+nnoremap <leader>Q :cclose<CR>
+nnoremap <leader>L :lclose<CR>
+
+" Buffer domain
+nnoremap <leader>bl :ls<CR>:b<space>
+nnoremap <leader>bd :bd<CR>
+
 " Section: External Commands and Integration
 " =============================================================================
 
 " grep settings
 set grepformat=%f:%l:%c:%m,%f:%l:%m,%f:%l%m,%f\ \ %l%m
-set grepprg=rg\ --vimgrep\ --hidden\ -g\ '!.git/*'
+set grepprg=rg\ --vimgrep\ --hidden\ --respect-gitignore\ --smart-case\ --follow\ -g\ '!{.git,node_modules,target,dist,build}/*'\ -g\ '!*.{log,tmp,temp,cache}'
 
 " Section: Commands
 " =============================================================================
@@ -190,6 +214,12 @@ if has('nvim')
   command! LspRestart lua vim.lsp.stop_client(vim.lsp.get_active_clients()); edit
   command! LspInfo lua vim.cmd('LspInfo')
 endif
+
+" Search commands
+command! -nargs=1 Grep grep <args> | copen
+command! -nargs=1 LGrep lgrep <args> | lopen  
+command! -nargs=0 Todo grep -n "TODO\|FIXME\|XXX" | copen
+command! -nargs=0 GitGrep !git grep -n <args> | copen
 
 " Section: Autocommands
 " =============================================================================
@@ -230,8 +260,8 @@ endif
 packadd! matchit
 packadd! cfilter
 
-" Simple status line - encourages active awareness over passive monitoring
-set statusline=%f\ %h%w%m%r\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
+" Status line
+set statusline=%f\ %h%w%m%r%{v:lua.LspDiagnosticCounts()}\ %=%{&ff}\ %{&fenc}\ %{&ft}\ %l,%c%V\ %P
 
 " Session management
 set sessionoptions=blank,buffers,folds,help,tabpages,winsize,terminal,sesdir,globals

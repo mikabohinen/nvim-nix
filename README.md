@@ -308,15 +308,19 @@ Or if you already have a `configuration.nix`, add this to your existing configur
 
 ## Key Bindings
 
-This configuration prioritizes learning transferable Vim skills over convenience shortcuts. Most operations use standard Vim commands rather than custom mappings.
+This configuration prioritizes learning transferable Vim skills through
+compositional workflows. Operations use standard Vim commands that compose
+together through Vim's built-in state management.
 
 ### Core Patterns
 
-**No leader key clutter**: Most operations use standard Vim commands (`:find`, `:grep`, `:copen`, etc.)
+Leader mappings provide entry points to workflow domains that exchange data
+through Vim's built-in systems (search register, quickfix lists, buffer system)
 
-**Vim's standard patterns**: All navigation follows Vim's `][` and buffer patterns
+All operations use standard Vim commands and can be replicated anywhere with
+simple single-line mappings
 
-### Essential Mappings (The Only Ones)
+### Essential Mappings
 
 ```vim
 " Fix Vim's & command behavior
@@ -325,7 +329,7 @@ This configuration prioritizes learning transferable Vim skills over convenience
 " File browser
 -                    " Edit current file's directory (:e %:h)
 
-" List navigation
+" List navigation (Vim standard patterns)
 ]q / [q              " Next/previous quickfix
 ]l / [l              " Next/previous location list
 ]b / [b              " Next/previous buffer
@@ -335,18 +339,67 @@ This configuration prioritizes learning transferable Vim skills over convenience
 <Esc><Esc>           " Clear search highlights
 ```
 
+### Leader Mappings
+
+These mappings enable workflow domains that exchange data through Vim's
+built-in systems. Each domain provides entry points that compose with standard
+Vim operations.
+
+#### Search Domain
+```vim
+<leader>g            " :grep (project search)
+<leader>G            " :grep <word-under-cursor>
+<leader>*            " :grep <last-search> (reuse search register)
+<leader>/            " :grep <word-under-cursor> (with prompt for refinement)
+```
+
+#### File Domain  
+```vim
+<leader><leader>     " :find (primary file opener)
+<leader>sf           " :vert sf (split file opener)
+<leader>tf           " :find *_test.* (find corresponding test file)
+```
+
+#### List Domain
+```vim
+<leader>q            " :copen (open quickfix)
+<leader>l            " :lopen (open location list)
+<leader>Q            " :cclose (close quickfix)
+<leader>L            " :lclose (close location list)
+```
+
+#### Buffer Domain
+```vim
+<leader>bl           " :ls | :b (buffer list and switch)
+<leader>bd           " :bd (delete buffer)
+```
+
+### Workflow Examples
+
+**Investigation Flow**:
+```
+/pattern → <leader>* → <leader>q → ]q → gd → <leader>G → <leader>q
+```
+Search buffer → expand to project → review results → navigate → follow definition → search symbol → review all references
+
+**File Exploration Flow**:
+```  
+<leader><leader>file → <leader>tf → <leader>sf related → <leader>g pattern → <leader>l
+```
+Find file → find test → open related in split → search current context → window-local results
+
 ### LSP Mappings (Buffer-local, only when LSP attached)
 
 ```vim
-" Core navigation (extends Vim's g* patterns)
+" Core navigation
 gd                   " Go to definition
-gr                   " Go to references
+gr                   " Go to references  
 gi                   " Go to implementation
 gD                   " Go to declaration
 gy                   " Go to type definition
 K                    " Hover documentation
 
-" Diagnostic navigation (follows ][ pattern)
+" Diagnostic navigation
 ]d / [d              " Next/previous diagnostic
 ]D / [D              " Next/previous error diagnostic
 ```
@@ -356,72 +409,51 @@ K                    " Hover documentation
 **Text objects**:
 
 ```vim
-af / if              " Around/inside function
-ac / ic              " Around/inside class
-al / il              " Around/inside loop
-aa / ia              " Around/inside parameter
+af / if          " Around/inside function
+ac / ic          " Around/inside class
+al / il          " Around/inside loop
+aa / ia          " Around/inside parameter
 ```
 
 **Movement**:
 
 ```vim
-]f / [f              " Next/previous function start
-]c / [c              " Next/previous class start
-]F / [F              " Next/previous function end
-]C / [C              " Next/previous class end
+]f / [f          " Next/previous function start
+]c / [c          " Next/previous class start
+]F / [F          " Next/previous function end
+]C / [C          " Next/previous class end
 ```
 
 **Incremental selection**:
 
 ```vim
-gnn                  " Start incremental selection
-grn                  " Increment to next node
-grc                  " Increment to scope
-grm                  " Decrement selection
-```
-
-### File Browser (netrw)
-
-netrw configuration provides a capable file browser:
-
-```vim
--                    " Edit current file's directory
-:e .                 " Edit current working directory
-:e %:h               " Edit current file's directory (explicit)
-```
-
-Within netrw:
-- `<CR>` to open files
-- `D` to delete
-- `R` to rename
-- `%` to create new file
-- `d` to create new directory
-
-### Lisp Development
-
-For Lisp, I use a terminal-based REPL workflow:
-
-```vim
-:terminal sbcl       " Start SBCL in terminal split
-:terminal            " General terminal
-
-" Vim-sexp provides paredit-style editing
-" Standard text objects work semantically:
-di(                  " Delete inside s-expression
-ya(                  " Yank around s-expression
-ci(                  " Change inside s-expression
-```
+gnn              " Start incremental selection
+grn              " Increment to next node
+grc              " Increment to scope
+grm              " Decrement selection
 
 ## Commands
 
+### Workflow Commands
+
+These commands provide entry points for common workflows:
+
+```vim
+:Grep pattern        " Run grep and open results in quickfix
+:LGrep pattern       " Run lgrep and open results in location list  
+:Todo                " Find TODO/FIXME/XXX comments project-wide
+:GitGrep pattern     " Use git grep for repository-aware search
+```
+
 ### Essential Commands to Learn
 
-**File Operations** (instead of shortcuts):
+**File Operations**:
 ```vim
 :find filename       " Find and open file (with fuzzy completion)
 :vert sf filename    " Find and open in vertical split
 :grep pattern        " Search project-wide
 :grep <C-R><C-W>     " Search word under cursor
+:grep <C-R>/         " Search for last search pattern
 ```
 
 **Navigation**:
@@ -468,6 +500,8 @@ ci(                  " Change inside s-expression
 :StripWhitespace     " Remove trailing whitespace from entire buffer
 ```
 
+## Development Workflow
+
 ### Adding a Language
 
 Edit `config/languages.nix` and add
@@ -502,9 +536,6 @@ vim-commentary = {
 if you wanted to auto-comment.
 
 ## FAQ
-
-**Q: Why no leader key mappings when most configs have dozens?**
-A: Leader mappings provide convenience at the cost of learning transferable skills. `:find filename` works on any Vim installation and teaches you the underlying system. `<leader><leader>` only works with a specific config.
 
 **Q: Only 7 plugins when my current config has 50+?**
 A: I prioritize learning Vim's native capabilities over convenience features.
